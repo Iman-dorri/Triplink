@@ -42,9 +42,13 @@ async def health_check():
 
 # Import routes
 from app.controllers.auth import router as auth_router
+from app.controllers.connection import router as connection_router
+from app.controllers.message import router as message_router
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(connection_router)
+app.include_router(message_router)
 
 # Root endpoint
 @app.get("/")

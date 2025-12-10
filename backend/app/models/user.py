@@ -20,18 +20,26 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relationships - will be added when other models are implemented
+    # Relationships
     # trips = relationship("Trip", back_populates="user", cascade="all, delete-orphan")
     # price_alerts = relationship("PriceAlert", back_populates="user", cascade="all, delete-orphan")
     # shopping_items = relationship("ShoppingItem", back_populates="user", cascade="all, delete-orphan")
-    # connections = relationship("UserConnection", 
-    #                         foreign_keys="UserConnection.user_id",
-    #                         back_populates="user",
-    #                         cascade="all, delete-orphan")
-    # connected_to = relationship("UserConnection",
-    #                           foreign_keys="UserConnection.connected_user_id",
-    #                           back_populates="connected_user",
-    #                           cascade="all, delete-orphan")
+    connections = relationship("UserConnection", 
+                            foreign_keys="UserConnection.user_id",
+                            back_populates="user",
+                            cascade="all, delete-orphan")
+    connected_to = relationship("UserConnection",
+                              foreign_keys="UserConnection.connected_user_id",
+                              back_populates="connected_user",
+                              cascade="all, delete-orphan")
+    sent_messages = relationship("Message",
+                                foreign_keys="Message.sender_id",
+                                back_populates="sender",
+                                cascade="all, delete-orphan")
+    received_messages = relationship("Message",
+                                    foreign_keys="Message.receiver_id",
+                                    back_populates="receiver",
+                                    cascade="all, delete-orphan")
     # notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
