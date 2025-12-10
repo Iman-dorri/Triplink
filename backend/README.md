@@ -1,6 +1,6 @@
-# TripLink Backend
+# Synvoy Backend
 
-FastAPI-based backend for the TripLink Smart Travel & Shopping Platform.
+FastAPI-based backend for the Synvoy Smart Travel & Shopping Platform.
 
 ## Features
 
@@ -30,7 +30,7 @@ pip install -r requirements.txt
 cp env.example .env
 
 # Edit .env with your database credentials
-DATABASE_URL=postgresql://username:password@localhost:5432/triplink
+DATABASE_URL=postgresql://username:password@localhost:5432/synvoy
 SECRET_KEY=your-secret-key-here
 ```
 
@@ -39,8 +39,8 @@ SECRET_KEY=your-secret-key-here
 ```bash
 # Install PostgreSQL and create database
 sudo apt install postgresql postgresql-contrib
-sudo -u postgres createdb triplink
-sudo -u postgres createuser triplink_user
+sudo -u postgres createdb synvoy
+sudo -u postgres createuser synvoy_user
 
 # Run database migrations (when implemented)
 alembic upgrade head

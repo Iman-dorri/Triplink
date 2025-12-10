@@ -581,10 +581,10 @@ sed -i '/\/\/ Routes (to be added)/a app.use("/api/auth", require("./routes/auth
 cd ../mobile-app
 
 # Create React Native project
-npx react-native@latest init TripLinkMobile --template react-native-template-typescript
+npx react-native@latest init SynvoyMobile --template react-native-template-typescript
 
 # Install additional dependencies
-cd TripLinkMobile
+cd SynvoyMobile
 npm install @react-navigation/native @react-navigation/stack @react-navigation/bottom-tabs
 npm install @reduxjs/toolkit react-redux
 npm install react-native-vector-icons
@@ -889,9 +889,9 @@ EOF
 cd ../web-app
 
 # Create Next.js project
-npx create-next-app@latest triplink-web --typescript --tailwind --eslint
+npx create-next-app@latest synvoy-web --typescript --tailwind --eslint
 
-cd triplink-web
+cd synvoy-web
 
 # Install additional dependencies
 npm install @reduxjs/toolkit react-redux
@@ -1124,7 +1124,7 @@ cat > package.json << 'EOF'
   "scripts": {
     "dev:backend": "cd backend && npm run dev",
     "dev:web": "cd web-app && npm run dev",
-    "dev:mobile": "cd mobile-app/TripLinkMobile && npm run android",
+    "dev:mobile": "cd mobile-app/SynvoyMobile && npm run android",
     "build:backend": "cd backend && npm run build",
     "build:web": "cd web-app && npm run build",
     "test:backend": "cd backend && npm test",
@@ -1132,7 +1132,7 @@ cat > package.json << 'EOF'
     "db:migrate": "cd backend && npx prisma db push",
     "db:seed": "cd backend && npm run seed",
     "db:studio": "cd backend && npx prisma studio",
-    "install:all": "npm install && cd backend && npm install && cd ../web-app && npm install && cd ../mobile-app/TripLinkMobile && npm install"
+    "install:all": "npm install && cd backend && npm install && cd ../web-app && npm install && cd ../mobile-app/SynvoyMobile && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.0.1"
@@ -1384,7 +1384,7 @@ npx prisma db push --force-reset
 #### Mobile App Issues
 ```bash
 # Clear React Native cache
-cd mobile-app/TripLinkMobile
+cd mobile-app/SynvoyMobile
 npx react-native start --reset-cache
 
 # Clean Android build

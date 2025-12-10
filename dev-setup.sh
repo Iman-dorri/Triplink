@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# TripLink Development Setup Script
+# Synvoy Development Setup Script
 # This script helps set up the development environment
 
-echo "🚀 Setting up TripLink Development Environment..."
+echo "🚀 Setting up Synvoy Development Environment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -106,11 +106,11 @@ setup_mobile() {
     cd mobile-app
     
     # Check if React Native project already exists
-    if [ ! -d "TripLinkMobile" ]; then
+    if [ ! -d "SynvoyMobile" ]; then
         print_status "Creating React Native project..."
-        npx react-native@latest init TripLinkMobile --template react-native-template-typescript
+        npx react-native@latest init SynvoyMobile --template react-native-template-typescript
         
-        cd TripLinkMobile
+        cd SynvoyMobile
         
         print_status "Installing mobile app dependencies..."
         npm install @react-navigation/native @react-navigation/stack @react-navigation/bottom-tabs
@@ -135,11 +135,11 @@ setup_web() {
     cd web-app
     
     # Check if Next.js project already exists
-    if [ ! -d "triplink-web" ]; then
+    if [ ! -d "synvoy-web" ]; then
         print_status "Creating Next.js project..."
-        npx create-next-app@latest triplink-web --typescript --tailwind --eslint
+        npx create-next-app@latest synvoy-web --typescript --tailwind --eslint
         
-        cd triplink-web
+        cd synvoy-web
         
         print_status "Installing web app dependencies..."
         npm install @reduxjs/toolkit react-redux axios
@@ -157,7 +157,7 @@ setup_web() {
 
 # Main setup function
 main() {
-    print_status "Starting TripLink development environment setup..."
+    print_status "Starting Synvoy development environment setup..."
     
     # Check prerequisites
     check_prerequisites
@@ -171,13 +171,13 @@ main() {
     # Setup web app
     setup_web
     
-    print_success "🎉 TripLink development environment setup completed!"
+    print_success "🎉 Synvoy development environment setup completed!"
     echo ""
     echo "Next steps:"
     echo "1. Edit backend/.env with your database credentials"
     echo "2. Start the backend: cd backend && python main.py"
-    echo "3. Start the mobile app: cd mobile-app/TripLinkMobile && npm run android"
-    echo "4. Start the web app: cd web-app/triplink-web && npm run dev"
+    echo "3. Start the mobile app: cd mobile-app/SynvoyMobile && npm run android"
+    echo "4. Start the web app: cd web-app/synvoy-web && npm run dev"
     echo ""
     echo "Happy coding! 🚀"
 }

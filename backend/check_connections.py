@@ -16,3 +16,4 @@ if 'user_connections' in inspector.get_table_names():
     for fk in fks:
         print(f"  {fk['name']}: {fk['constrained_columns']} -> {fk['referred_table']}.{fk['referred_columns']}")
 
+

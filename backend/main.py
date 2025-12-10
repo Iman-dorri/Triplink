@@ -10,7 +10,7 @@ load_dotenv()
 
 # Create FastAPI app
 app = FastAPI(
-    title="TripLink API",
+    title="Synvoy API",
     description="Smart Travel & Shopping Platform API",
     version="1.0.0",
     docs_url="/docs",
@@ -36,7 +36,7 @@ app.add_middleware(
 async def health_check():
     return {
         "status": "healthy",
-        "service": "TripLink API",
+        "service": "Synvoy API",
         "version": "1.0.0"
     }
 
@@ -54,7 +54,7 @@ app.include_router(message_router)
 @app.get("/")
 async def root():
     return {
-        "message": "Welcome to TripLink API",
+        "message": "Welcome to Synvoy API",
         "docs": "/docs",
         "health": "/health"
     }

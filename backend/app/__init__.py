@@ -1,1 +1,1 @@
-# TripLink Backend Application 
+# Synvoy Backend Application 

@@ -1,11 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
+import LoginModal from '@/components/auth/LoginModal'
+import RegisterModal from '@/components/auth/RegisterModal'
 
 export default function HomePage() {
+  const { user, isLoading } = useAuth()
+  const router = useRouter()
   const [showLogin, setShowLogin] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
   const [activeFeature, setActiveFeature] = useState(0)
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push('/dashboard')
+    }
+  }, [user, isLoading, router])
 
   const features = [
     {
@@ -64,7 +77,7 @@ export default function HomePage() {
       name: 'Sarah Johnson',
       role: 'Frequent Traveler',
       avatar: '👩‍💼',
-      content: 'TripLink saved me over $800 on my last vacation. The price alerts are incredible!',
+      content: 'Synvoy saved me over $800 on my last vacation. The price alerts are incredible!',
       rating: 5
     },
     {
@@ -94,7 +107,7 @@ export default function HomePage() {
                 <span className="text-2xl">🌍</span>
               </div>
               <div>
-                <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">TripLink</span>
+                <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
                 <p className="text-xs text-gray-500 -mt-1">Smart Travel Platform</p>
               </div>
             </div>
@@ -128,7 +141,7 @@ export default function HomePage() {
           <div className="text-center relative z-10">
             <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-8 shadow-lg">
               <span className="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse"></span>
-              Join 50,000+ travelers already using TripLink
+              Join 50,000+ travelers already using Synvoy
             </div>
             
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
@@ -258,7 +271,7 @@ export default function HomePage() {
               <span className="block text-blue-600">Worldwide</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              See what our users are saying about their TripLink experience
+              See what our users are saying about their Synvoy experience
             </p>
           </div>
           
@@ -336,7 +349,7 @@ export default function HomePage() {
                   <span className="text-2xl">🌍</span>
                 </div>
                 <div>
-                  <span className="text-2xl font-bold">TripLink</span>
+                  <span className="text-2xl font-bold">Synvoy</span>
                   <p className="text-sm text-gray-400">Smart Travel Platform</p>
                 </div>
               </div>
@@ -396,7 +409,7 @@ export default function HomePage() {
           
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              &copy; 2024 TripLink. All rights reserved.
+              &copy; 2024 Synvoy. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm text-gray-400">
               <a href="#" className="hover:text-white transition-colors duration-300">Privacy</a>
@@ -419,7 +432,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-2xl font-bold text-white">Welcome Back</h3>
-                    <p className="text-blue-100 mt-2">Sign in to your TripLink account</p>
+                    <p className="text-blue-100 mt-2">Sign in to your Synvoy account</p>
                   </div>
                   <button
                     onClick={() => setShowLogin(false)}
@@ -506,7 +519,7 @@ export default function HomePage() {
               <div className="bg-gradient-to-r from-teal-600 to-emerald-600 px-8 py-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-white">Join TripLink</h3>
+                    <h3 className="text-2xl font-bold text-white">Join Synvoy</h3>
                     <p className="text-teal-100 mt-2">Create your account and start planning</p>
                   </div>
                   <button
@@ -652,6 +665,24 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Auth Modals */}
+      <LoginModal
+        isOpen={showLogin}
+        onClose={() => setShowLogin(false)}
+        onSwitchToRegister={() => {
+          setShowLogin(false)
+          setShowRegister(true)
+        }}
+      />
+      <RegisterModal
+        isOpen={showRegister}
+        onClose={() => setShowRegister(false)}
+        onSwitchToLogin={() => {
+          setShowRegister(false)
+          setShowLogin(true)
+        }}
+      />
     </div>
   )
 }

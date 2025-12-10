@@ -1,15 +1,20 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TripLink - Smart Travel & Shopping Platform',
+  title: 'Synvoy - Smart Travel & Shopping Platform',
   description: 'Plan trips, track prices, and manage your travel shopping all in one place.',
   keywords: 'travel, planning, price alerts, shopping, trips, destinations',
-  authors: [{ name: 'TripLink Team' }],
-  viewport: 'width=device-width, initial-scale=1',
+  authors: [{ name: 'Synvoy Team' }],
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -20,7 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full`}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )

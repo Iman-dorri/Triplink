@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "triplink"
+name = "synvoy"
 version = "1.0.0"
 description = "Smart Travel & Shopping Platform"
 authors = [
-    {name = "TripLink Team", email = "team@triplink.com"}
+    {name = "Synvoy Team", email = "team@synvoy.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.8"

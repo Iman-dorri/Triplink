@@ -31,3 +31,4 @@ class ChatConversation(BaseModel):
     last_message: Optional[MessageResponse] = None
     unread_count: int = 0
 
+

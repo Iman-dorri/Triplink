@@ -15,22 +15,22 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 2. Mobile App (React Native)
 Terminal 1 - Start Metro Bundler:
-cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/mobile-app/TripLinkMobile
+cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/mobile-app/SynvoyMobile
 npx react-native start --reset-cache
 
 Terminal 2 - Start Android Emulator (if not running):
 emulator -avd Medium_Phone_API_36 &
 
 Terminal 3 - Run Android App:
-cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/mobile-app/TripLinkMobile
+cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/mobile-app/SynvoyMobile
 npx react-native run-android
 
 3. Web App (Next.js) - Optional
-cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/web-app/triplink-web
+cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/web-app/synvoy-web
 npm run dev
 
 Command to run on your phone:
-cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/mobile-app/TripLinkMobile
+cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLink/mobile-app/SynvoyMobile
 export ANDROID_SDK_ROOT=/home/necromancer/Android/Sdk
 export ANDROID_HOME=/home/necromancer/Android/Sdk
 npx react-native run-android
@@ -41,7 +41,7 @@ export PATH=$PATH:/home/necromancer/Android/Sdk/platform-tools
 adb devices
 
 If you want to run ONLY on your phone (not emulator):
-adb -s R5CWC1Z2WXW shell am start -n com.triplinkmobile/.MainActivity
+adb -s R5CWC1Z2WXW shell am start -n com.synvoymobile/.MainActivity
 
 Or specify the device:
 npx react-native run-android --deviceId=R5CWC1Z2WXW

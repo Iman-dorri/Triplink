@@ -1,6 +1,6 @@
-# TripLink Web App
+# Synvoy Web App
 
-Next.js web application for the TripLink Smart Travel & Shopping Platform.
+Next.js web application for the Synvoy Smart Travel & Shopping Platform.
 
 ## Prerequisites
 
@@ -12,8 +12,8 @@ Next.js web application for the TripLink Smart Travel & Shopping Platform.
 ### 1. Create Next.js Project
 
 ```bash
-npx create-next-app@latest triplink-web --typescript --tailwind --eslint
-cd triplink-web
+npx create-next-app@latest synvoy-web --typescript --tailwind --eslint
+cd synvoy-web
 ```
 
 ### 2. Install Dependencies
@@ -31,7 +31,7 @@ npm install tailwind-merge
 ### 3. Project Structure
 
 ```
-triplink-web/
+synvoy-web/
 ├── src/
 │   ├── components/     # Reusable UI components
 │   ├── pages/          # Next.js pages
@@ -106,7 +106,7 @@ The app uses Tailwind CSS for styling with a custom design system:
 
 ## API Integration
 
-The web app integrates with the TripLink backend API:
+The web app integrates with the Synvoy backend API:
 
 - **Base URL**: `http://localhost:8000/api`
 - **Authentication**: JWT-based authentication

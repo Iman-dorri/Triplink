@@ -1,10 +1,10 @@
-# TripLink - Smart Travel & Shopping Platform
+# Synvoy - Smart Travel & Shopping Platform
 
 A comprehensive platform that combines travel planning with smart shopping features, helping users plan trips and find the best deals on travel-related items.
 
 ## 🚀 Project Overview
 
-TripLink is a multi-platform application that helps users:
+Synvoy is a multi-platform application that helps users:
 - **Plan trips** with detailed itineraries and destination management
 - **Set price alerts** for flights, hotels, and travel items
 - **Manage shopping lists** with price tracking and comparison
@@ -49,7 +49,7 @@ The project consists of three main components:
 ## 📁 Project Structure
 
 ```
-TripLink/
+Synvoy/
 ├── backend/                 # Python FastAPI backend
 │   ├── app/
 │   │   ├── controllers/    # API route handlers
@@ -62,10 +62,10 @@ TripLink/
 │   ├── requirements.txt    # Python dependencies
 │   └── README.md          # Backend documentation
 ├── mobile-app/             # React Native mobile app
-│   ├── TripLinkMobile/     # React Native project
+│   ├── SynvoyMobile/     # React Native project
 │   └── README.md          # Mobile app documentation
 ├── web-app/                # Next.js web application
-│   ├── triplink-web/       # Next.js project
+│   ├── synvoy-web/       # Next.js project
 │   └── README.md          # Web app documentation
 ├── Document/               # Project documentation
 └── README.md              # This file
@@ -106,10 +106,10 @@ python main.py
 cd mobile-app
 
 # Create React Native project
-npx react-native@latest init TripLinkMobile --template react-native-template-typescript
+npx react-native@latest init SynvoyMobile --template react-native-template-typescript
 
 # Install dependencies
-cd TripLinkMobile
+cd SynvoyMobile
 npm install @react-navigation/native @react-navigation/stack @reduxjs/toolkit react-redux
 
 # Run on Android
@@ -122,10 +122,10 @@ npm run android
 cd web-app
 
 # Create Next.js project
-npx create-next-app@latest triplink-web --typescript --tailwind --eslint
+npx create-next-app@latest synvoy-web --typescript --tailwind --eslint
 
 # Install dependencies
-cd triplink-web
+cd synvoy-web
 npm install @reduxjs/toolkit react-redux axios
 
 # Run development server
@@ -163,11 +163,11 @@ pytest
 ### Frontend Testing
 ```bash
 # Mobile app
-cd mobile-app/TripLinkMobile
+cd mobile-app/SynvoyMobile
 npm test
 
 # Web app
-cd web-app/triplink-web
+cd web-app/synvoy-web
 npm test
 ```
 

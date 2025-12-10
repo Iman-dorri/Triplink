@@ -67,6 +67,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     # Find user by email
     user = db.query(User).filter(User.email == user_credentials.email).first()
     if not user:
+        print(f"Login attempt failed: User with email {user_credentials.email} not found")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -74,6 +75,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     
     # Verify password
     if not verify_password(user_credentials.password, user.password_hash):
+        print(f"Login attempt failed: Incorrect password for user {user_credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -81,10 +83,13 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     
     # Check if user is active
     if user.status != 'active':
+        print(f"Login attempt failed: User {user_credentials.email} is not active (status: {user.status})")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account is not active"
+            detail=f"User account is not active. Current status: {user.status}"
         )
+    
+    print(f"Login successful for user {user_credentials.email}")
     
     # Generate access token
     access_token = create_access_token(

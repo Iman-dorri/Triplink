@@ -1,6 +1,6 @@
-# TripLink Mobile App
+# Synvoy Mobile App
 
-React Native mobile application for the TripLink Smart Travel & Shopping Platform.
+React Native mobile application for the Synvoy Smart Travel & Shopping Platform.
 
 ## Prerequisites
 
@@ -21,8 +21,8 @@ npm install -g @react-native-community/cli
 ### 2. Create React Native Project
 
 ```bash
-npx react-native@latest init TripLinkMobile --template react-native-template-typescript
-cd TripLinkMobile
+npx react-native@latest init SynvoyMobile --template react-native-template-typescript
+cd SynvoyMobile
 ```
 
 ### 3. Install Dependencies
@@ -54,7 +54,7 @@ npm install react-native-reanimated
 ## Project Structure
 
 ```
-TripLinkMobile/
+SynvoyMobile/
 ├── src/
 │   ├── components/     # Reusable UI components
 │   ├── screens/        # Screen components

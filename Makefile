@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "TripLink Development Commands:"
+	@echo "Synvoy Development Commands:"
 	@echo ""
 	@echo "Backend:"
 	@echo "  backend-install    Install Python dependencies"
@@ -48,28 +48,28 @@ backend-lint:
 # Mobile app commands
 mobile-setup:
 	@echo "Setting up React Native project..."
-	cd mobile-app && npx react-native@latest init TripLinkMobile --template react-native-template-typescript
+	cd mobile-app && npx react-native@latest init SynvoyMobile --template react-native-template-typescript
 
 mobile-install:
 	@echo "Installing mobile app dependencies..."
-	cd mobile-app/TripLinkMobile && npm install
+	cd mobile-app/SynvoyMobile && npm install
 
 mobile-android:
 	@echo "Running mobile app on Android..."
-	cd mobile-app/TripLinkMobile && npm run android
+	cd mobile-app/SynvoyMobile && npm run android
 
 # Web app commands
 web-setup:
 	@echo "Setting up Next.js project..."
-	cd web-app && npx create-next-app@latest triplink-web --typescript --tailwind --eslint
+	cd web-app && npx create-next-app@latest synvoy-web --typescript --tailwind --eslint
 
 web-install:
 	@echo "Installing web app dependencies..."
-	cd web-app/triplink-web && npm install
+	cd web-app/synvoy-web && npm install
 
 web-dev:
 	@echo "Starting web app in development mode..."
-	cd web-app/triplink-web && npm run dev
+	cd web-app/synvoy-web && npm run dev
 
 # General commands
 install-all: backend-install

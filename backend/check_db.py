@@ -22,3 +22,4 @@ if 'messages' in tables:
 else:
     print('\nmessages table does NOT exist')
 
+

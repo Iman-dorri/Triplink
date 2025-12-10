@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# TripLink Database Setup Script for PostgreSQL 16.9
-# This script sets up the complete database structure for the TripLink project
+# Synvoy Database Setup Script for PostgreSQL 16.9
+# This script sets up the complete database structure for the Synvoy project
 
-echo "🚀 Setting up TripLink PostgreSQL Database..."
+echo "🚀 Setting up Synvoy PostgreSQL Database..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -95,7 +95,7 @@ create_schema() {
     
     # Create the schema SQL file
     cat > /tmp/triplink_schema.sql << 'EOF'
--- TripLink Database Schema
+-- Synvoy Database Schema
 -- PostgreSQL 16.9
 
 -- Enable necessary extensions
@@ -330,7 +330,7 @@ insert_sample_data() {
     
     # Create sample data SQL file
     cat > /tmp/triplink_sample_data.sql << 'EOF'
--- Sample data for TripLink
+-- Sample data for Synvoy
 
 -- Insert sample user (password: test123)
 INSERT INTO users (email, password_hash, first_name, last_name, phone, is_verified, status) VALUES
@@ -444,7 +444,7 @@ update_backend_env() {
 
 # Main execution
 main() {
-    print_status "Starting TripLink database setup..."
+    print_status "Starting Synvoy database setup..."
     
     # Check PostgreSQL
     check_postgres
@@ -464,7 +464,7 @@ main() {
     # Update backend environment
     update_backend_env
     
-    print_success "🎉 TripLink database setup completed successfully!"
+    print_success "🎉 Synvoy database setup completed successfully!"
     echo ""
     echo "Next steps:"
     echo "1. Start the backend: make backend-run"
