@@ -90,6 +90,14 @@ export default function DashboardPage() {
             </div>
           </Link>
 
+          <Link href="/dashboard/trips">
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
+              <div className="text-4xl mb-4">✈️</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Trips</h3>
+              <p className="text-gray-600">Create and manage your trips</p>
+            </div>
+          </Link>
+
           <Link href="/dashboard/messages">
             <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
               <div className="text-4xl mb-4">💬</div>
@@ -97,12 +105,6 @@ export default function DashboardPage() {
               <p className="text-gray-600">Chat with your connections</p>
             </div>
           </Link>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
-            <div className="text-4xl mb-4">👤</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Profile</h3>
-            <p className="text-gray-600">View and edit your profile</p>
-          </div>
         </div>
 
         {/* User Info Card */}
@@ -129,4 +131,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 

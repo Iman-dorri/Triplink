@@ -21,7 +21,8 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    # trips = relationship("Trip", back_populates="user", cascade="all, delete-orphan")
+    trips = relationship("Trip", foreign_keys="Trip.user_id", back_populates="creator", cascade="all, delete-orphan")
+    trip_participations = relationship("TripParticipant", back_populates="user", cascade="all, delete-orphan")
     # price_alerts = relationship("PriceAlert", back_populates="user", cascade="all, delete-orphan")
     # shopping_items = relationship("ShoppingItem", back_populates="user", cascade="all, delete-orphan")
     connections = relationship("UserConnection", 

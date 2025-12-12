@@ -3,7 +3,7 @@ Initialize database tables.
 Run this script to create all database tables.
 """
 from app.database import engine, Base
-from app.models import User, UserConnection, Message
+from app.models import User, UserConnection, Message, Trip, TripParticipant
 
 def init_db():
     """Create all database tables."""
@@ -13,5 +13,6 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
+
 
 

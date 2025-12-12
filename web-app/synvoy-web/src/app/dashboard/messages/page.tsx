@@ -100,29 +100,76 @@ export default function MessagesPage() {
         ) : conversations.length > 0 ? (
           <div className="space-y-4">
             {conversations.map((conversation) => {
-              const otherUser = getOtherUser(conversation);
-              return (
-                <Link
-                  key={conversation.id}
-                  href={`/dashboard/chat/${otherUser?.id}`}
-                  className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        {otherUser?.first_name} {otherUser?.last_name}
-                      </h3>
-                      <p className="text-gray-600 mt-1">{conversation.content}</p>
-                      <p className="text-gray-500 text-sm mt-2">
-                        {new Date(conversation.created_at).toLocaleString()}
-                      </p>
+              // Check if it's a trip chat or 1-on-1 chat
+              if (conversation.trip_id) {
+                return (
+                  <Link
+                    key={conversation.trip_id}
+                    href={`/dashboard/trips/${conversation.trip_id}/chat`}
+                    className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">🌍</span>
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {conversation.trip_title}
+                          </h3>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Group</span>
+                        </div>
+                        {conversation.last_message && (
+                          <>
+                            <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
+                            <p className="text-gray-500 text-sm mt-2">
+                              {new Date(conversation.last_message.created_at).toLocaleString()}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                      {conversation.unread_count > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                            {conversation.unread_count}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    {!conversation.is_read && conversation.receiver?.id === user?.id && (
-                      <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                    )}
-                  </div>
-                </Link>
-              );
+                  </Link>
+                );
+              } else {
+                // 1-on-1 chat
+                const otherUser = getOtherUser(conversation);
+                return (
+                  <Link
+                    key={conversation.user_id}
+                    href={`/dashboard/chat/${conversation.user_id}`}
+                    className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-gray-900">
+                          {conversation.user_name}
+                        </h3>
+                        {conversation.last_message && (
+                          <>
+                            <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
+                            <p className="text-gray-500 text-sm mt-2">
+                              {new Date(conversation.last_message.created_at).toLocaleString()}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                      {conversation.unread_count > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                            {conversation.unread_count}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              }
             })}
           </div>
         ) : (
@@ -134,4 +181,5 @@ export default function MessagesPage() {
     </div>
   );
 }
+
 

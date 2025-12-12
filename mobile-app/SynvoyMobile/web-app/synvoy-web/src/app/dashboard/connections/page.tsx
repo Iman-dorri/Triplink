@@ -171,7 +171,7 @@ export default function ConnectionsPage() {
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    {connection.status === 'pending' && connection.user_id === user.id && (
+                    {connection.status === 'pending' && connection.connected_user_id === user.id && (
                       <>
                         <button
                           onClick={() => handleUpdateConnection(connection.id, 'accepted')}
@@ -188,6 +188,11 @@ export default function ConnectionsPage() {
                           Block
                         </button>
                       </>
+                    )}
+                    {connection.status === 'pending' && connection.user_id === user.id && (
+                      <span className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold">
+                        Request Sent
+                      </span>
                     )}
                     {connection.status === 'accepted' && (
                       <Link

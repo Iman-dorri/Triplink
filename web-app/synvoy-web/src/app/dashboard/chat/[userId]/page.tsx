@@ -72,7 +72,7 @@ export default function ChatPage() {
     setSending(true);
     setError('');
     try {
-      await messageAPI.sendMessage(userId, newMessage);
+      await messageAPI.sendMessage(newMessage, userId);
       setNewMessage('');
       fetchMessages();
     } catch (err: any) {
@@ -191,4 +191,5 @@ export default function ChatPage() {
     </div>
   );
 }
+
 
