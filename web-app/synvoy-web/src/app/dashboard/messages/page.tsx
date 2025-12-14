@@ -147,32 +147,32 @@ export default function MessagesPage() {
     return conversations.map((conversation) => {
       // Check if it's a trip chat or 1-on-1 chat
       if (conversation.trip_id) {
-        return (
+            return (
           <Link
             key={conversation.trip_id}
             href={`/dashboard/trips/${conversation.trip_id}/chat`}
-            className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+            className="block bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🌍</span>
-                  <h3 className="text-xl font-semibold text-gray-900">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xl sm:text-2xl">🌍</span>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 truncate">
                     {conversation.trip_title}
                   </h3>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Group</span>
+                  <span className="px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-800 text-[10px] sm:text-xs rounded-full whitespace-nowrap">Group</span>
                 </div>
                 {conversation.last_message && (
                   <>
-                    <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
-                    <p className="text-gray-500 text-sm mt-2">
+                    <p className="text-sm sm:text-base text-gray-600 mt-1 truncate">{conversation.last_message.content}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
                       {new Date(conversation.last_message.created_at).toLocaleString()}
                     </p>
                   </>
                 )}
               </div>
               {conversation.unread_count > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
                     {conversation.unread_count}
                   </span>
@@ -188,24 +188,24 @@ export default function MessagesPage() {
           <Link
             key={conversation.user_id}
             href={`/dashboard/chat/${conversation.user_id}`}
-            className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+            className="block bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-900">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 truncate">
                   {conversation.user_name}
                 </h3>
                 {conversation.last_message && (
                   <>
-                    <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
-                    <p className="text-gray-500 text-sm mt-2">
+                    <p className="text-sm sm:text-base text-gray-600 mt-1 truncate">{conversation.last_message.content}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
                       {new Date(conversation.last_message.created_at).toLocaleString()}
                     </p>
                   </>
                 )}
               </div>
               {conversation.unread_count > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
                     {conversation.unread_count}
                   </span>
@@ -235,30 +235,32 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50 shadow-lg shadow-blue-900/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🌍</span>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            <Link href="/dashboard" className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-xl sm:text-2xl">🌍</span>
               </div>
               <div>
-                <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
               </div>
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {totalUnreadCount > 0 && (
-                <div className="relative inline-flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg font-semibold">
-                  <span className="text-lg mr-2">💬</span>
-                  <span className="text-sm">
-                    {totalUnreadCount} {totalUnreadCount === 1 ? 'unread message' : 'unread messages'}
+                <div className="relative inline-flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2 bg-red-600 text-white rounded-lg font-semibold">
+                  <span className="text-base sm:text-lg mr-1 sm:mr-2">💬</span>
+                  <span className="text-xs sm:text-sm hidden sm:inline">
+                    {totalUnreadCount} {totalUnreadCount === 1 ? 'unread' : 'unread'}
                   </span>
+                  <span className="text-xs sm:hidden">{totalUnreadCount}</span>
                 </div>
               )}
               <Link
                 href="/dashboard"
-                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
+                className="px-2 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base text-gray-700 hover:text-gray-900 font-medium rounded-lg hover:bg-gray-100 transition-colors"
               >
-                ← Back to Dashboard
+                <span className="hidden sm:inline">← Back to Dashboard</span>
+                <span className="sm:hidden">← Back</span>
               </Link>
             </div>
           </div>
@@ -266,8 +268,8 @@ export default function MessagesPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Messages</h1>
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 lg:py-12">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 lg:mb-8">Messages</h1>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -276,17 +278,17 @@ export default function MessagesPage() {
         )}
 
         {loading ? (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading conversations...</p>
+          <div className="bg-white rounded-xl sm:rounded-2xl p-8 sm:p-12 text-center shadow-lg">
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-600">Loading conversations...</p>
           </div>
         ) : conversationsList ? (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {conversationsList}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
-            <p className="text-gray-600">No conversations yet. Start chatting with your connections!</p>
+          <div className="bg-white rounded-xl sm:rounded-2xl p-8 sm:p-12 text-center shadow-lg">
+            <p className="text-sm sm:text-base text-gray-600">No conversations yet. Start chatting with your connections!</p>
           </div>
         )}
       </div>

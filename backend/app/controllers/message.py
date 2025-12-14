@@ -15,6 +15,7 @@ from app.schemas.message import (
 from app.controllers.auth import get_current_user
 from typing import List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -350,37 +351,46 @@ async def get_conversations(
     """Get all conversations for the current user (both 1-on-1 and trip group chats)."""
     conversations = []
     
+    # Convert current_user.id to string for comparison (UserConnection uses String columns)
+    user_id_str = str(current_user.id)
+    
     # Get all accepted connections for 1-on-1 chats
     connections = db.query(UserConnection).filter(
         or_(
-            UserConnection.user_id == current_user.id,
-            UserConnection.connected_user_id == current_user.id
+            UserConnection.user_id == user_id_str,
+            UserConnection.connected_user_id == user_id_str
         ),
         UserConnection.status == ConnectionStatus.ACCEPTED.value
     ).all()
     
     for conn in connections:
         # Determine the other user
-        if conn.user_id == current_user.id:
-            other_user_id = conn.connected_user_id
+        if conn.user_id == user_id_str:
+            other_user_id_str = conn.connected_user_id
         else:
-            other_user_id = conn.user_id
+            other_user_id_str = conn.user_id
+        
+        # Convert to UUID for User query
+        other_user_id = UUID(other_user_id_str) if isinstance(other_user_id_str, str) else other_user_id_str
         
         other_user = db.query(User).filter(User.id == other_user_id).first()
         if not other_user:
             continue
+        
+        # Convert current_user.id to UUID for Message query (Message uses UUID columns)
+        user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
         
         # Get last message in conversation (only 1-on-1)
         last_message = db.query(Message).filter(
             and_(
                 or_(
                     and_(
-                        Message.sender_id == current_user.id,
+                        Message.sender_id == user_uuid,
                         Message.receiver_id == other_user_id
                     ),
                     and_(
                         Message.sender_id == other_user_id,
-                        Message.receiver_id == current_user.id
+                        Message.receiver_id == user_uuid
                     )
                 ),
                 Message.trip_id.is_(None)  # Only 1-on-1 messages
@@ -390,7 +400,7 @@ async def get_conversations(
         # Count unread messages
         unread_count = db.query(Message).filter(
             Message.sender_id == other_user_id,
-            Message.receiver_id == current_user.id,
+            Message.receiver_id == user_uuid,
             Message.is_read == False,
             Message.trip_id.is_(None)  # Only 1-on-1 messages
         ).count()
@@ -414,8 +424,10 @@ async def get_conversations(
         ))
     
     # Get all trips where user is a participant for group chats
+    # TripParticipant uses UUID columns, so use UUID
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
     trip_participants = db.query(TripParticipant).filter(
-        TripParticipant.user_id == str(current_user.id),
+        TripParticipant.user_id == user_uuid,
         TripParticipant.status == "accepted"
     ).all()
     
@@ -432,7 +444,7 @@ async def get_conversations(
         # Count unread messages (messages not sent by current user)
         unread_count = db.query(Message).filter(
             Message.trip_id == trip.id,
-            Message.sender_id != current_user.id,
+            Message.sender_id != user_uuid,
             Message.is_read == False
         ).count()
         
@@ -455,8 +467,9 @@ async def get_conversations(
         ))
     
     # Sort by last message time (most recent first)
+    # Conversations with messages come first, then those without
     conversations.sort(
-        key=lambda x: x.last_message.created_at if x.last_message else None,
+        key=lambda x: x.last_message.created_at if x.last_message else datetime(1970, 1, 1, tzinfo=timezone.utc),
         reverse=True
     )
     
