@@ -3,17 +3,49 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { messageAPI } from '@/lib/api';
 
 export default function DashboardPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/');
     }
   }, [user, isLoading, router]);
+
+  // Fetch unread message count
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const conversations = await messageAPI.getConversations();
+        const total = conversations.reduce((sum: number, conv: any) => {
+          return sum + (conv.unread_count || 0);
+        }, 0);
+        setUnreadCount(total);
+      } catch (err) {
+        // Silently fail - don't show errors for unread count
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Poll every 5 seconds
+    intervalRef.current = setInterval(fetchUnreadCount, 5000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -99,8 +131,15 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/dashboard/messages">
-            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
-              <div className="text-4xl mb-4">💬</div>
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 relative">
+              <div className="text-4xl mb-4 relative inline-block">
+                💬
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Messages</h3>
               <p className="text-gray-600">Chat with your connections</p>
             </div>

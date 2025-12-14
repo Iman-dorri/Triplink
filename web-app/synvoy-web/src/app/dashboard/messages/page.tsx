@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { messageAPI } from '@/lib/api';
@@ -12,6 +12,8 @@ export default function MessagesPage() {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -19,24 +21,110 @@ export default function MessagesPage() {
     }
   }, [user, isLoading, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchConversations();
+  const fetchConversations = useCallback(async (isInitial = false) => {
+    // NEVER set loading to true if we've already initialized - absolute guard
+    const shouldShowLoading = isInitial && !hasInitializedRef.current;
+    
+    if (shouldShowLoading) {
+      setLoading(true);
     }
-  }, [user]);
-
-  const fetchConversations = async () => {
-    setLoading(true);
-    setError('');
+    
+    // Only clear error on initial load
+    if (shouldShowLoading) {
+      setError('');
+    }
+    
     try {
       const fetchedConversations = await messageAPI.getConversations();
-      setConversations(fetchedConversations);
+      
+      // If this is initial load, always update
+      if (shouldShowLoading) {
+        setConversations(fetchedConversations);
+        hasInitializedRef.current = true;
+        setLoading(false);
+        return;
+      }
+      
+      // For subsequent updates, check if data actually changed BEFORE calling setState
+      // This completely prevents any re-renders when data hasn't changed
+      setConversations(prev => {
+        // Quick length check first
+        if (prev.length !== fetchedConversations.length) {
+          return fetchedConversations;
+        }
+        
+        // Deep comparison - check if anything actually changed
+        let hasChanges = false;
+        for (let i = 0; i < prev.length; i++) {
+          const prevConv = prev[i];
+          const newConv = fetchedConversations[i];
+          
+          const prevId = prevConv.trip_id || prevConv.user_id;
+          const newId = newConv.trip_id || newConv.user_id;
+          
+          if (prevId !== newId) {
+            hasChanges = true;
+            break;
+          }
+          
+          // Check if last message changed
+          const prevLastMsg = prevConv.last_message?.created_at;
+          const newLastMsg = newConv.last_message?.created_at;
+          const prevUnread = prevConv.unread_count || 0;
+          const newUnread = newConv.unread_count || 0;
+          
+          if (prevLastMsg !== newLastMsg || prevUnread !== newUnread) {
+            hasChanges = true;
+            break;
+          }
+        }
+        
+        // Only update if there are actual changes - return prev to prevent re-render
+        return hasChanges ? fetchedConversations : prev;
+      });
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch conversations');
-    } finally {
-      setLoading(false);
+      // Only show error on initial load, not on refresh
+      if (shouldShowLoading) {
+        setError(err.message || 'Failed to fetch conversations');
+        hasInitializedRef.current = true; // Mark as initialized even on error
+        setLoading(false);
+      }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    let mounted = true;
+    
+    // Initial load - only once
+    if (!hasInitializedRef.current) {
+      fetchConversations(true).then(() => {
+        // Start polling only after initial load completes
+        if (mounted && !intervalRef.current) {
+          intervalRef.current = setInterval(() => {
+            fetchConversations(false);
+          }, 5000);
+        }
+      });
+    } else {
+      // If already initialized, just set up polling
+      if (!intervalRef.current) {
+        intervalRef.current = setInterval(() => {
+          fetchConversations(false);
+        }, 5000);
+      }
+    }
+    
+    return () => {
+      mounted = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // Only depend on user, fetchConversations is stable
 
   const getOtherUser = (conversation: any) => {
     if (conversation.sender?.id === user?.id) {
@@ -44,6 +132,91 @@ export default function MessagesPage() {
     }
     return conversation.sender;
   };
+
+  // Calculate total unread count
+  const totalUnreadCount = useMemo(() => {
+    return conversations.reduce((total, conv) => {
+      return total + (conv.unread_count || 0);
+    }, 0);
+  }, [conversations]);
+
+  // Memoize the conversations list to prevent unnecessary re-renders
+  const conversationsList = useMemo(() => {
+    if (conversations.length === 0) return null;
+    
+    return conversations.map((conversation) => {
+      // Check if it's a trip chat or 1-on-1 chat
+      if (conversation.trip_id) {
+        return (
+          <Link
+            key={conversation.trip_id}
+            href={`/dashboard/trips/${conversation.trip_id}/chat`}
+            className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🌍</span>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {conversation.trip_title}
+                  </h3>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Group</span>
+                </div>
+                {conversation.last_message && (
+                  <>
+                    <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
+                    <p className="text-gray-500 text-sm mt-2">
+                      {new Date(conversation.last_message.created_at).toLocaleString()}
+                    </p>
+                  </>
+                )}
+              </div>
+              {conversation.unread_count > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                    {conversation.unread_count}
+                  </span>
+                </div>
+              )}
+            </div>
+          </Link>
+        );
+      } else {
+        // 1-on-1 chat
+        const otherUser = getOtherUser(conversation);
+        return (
+          <Link
+            key={conversation.user_id}
+            href={`/dashboard/chat/${conversation.user_id}`}
+            className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {conversation.user_name}
+                </h3>
+                {conversation.last_message && (
+                  <>
+                    <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
+                    <p className="text-gray-500 text-sm mt-2">
+                      {new Date(conversation.last_message.created_at).toLocaleString()}
+                    </p>
+                  </>
+                )}
+              </div>
+              {conversation.unread_count > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                    {conversation.unread_count}
+                  </span>
+                </div>
+              )}
+            </div>
+          </Link>
+        );
+      }
+    });
+  }, [conversations, user]);
 
   if (isLoading) {
     return (
@@ -72,12 +245,22 @@ export default function MessagesPage() {
                 <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
               </div>
             </Link>
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
-            >
-              ← Back to Dashboard
-            </Link>
+            <div className="flex items-center gap-4">
+              {totalUnreadCount > 0 && (
+                <div className="relative inline-flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg font-semibold">
+                  <span className="text-lg mr-2">💬</span>
+                  <span className="text-sm">
+                    {totalUnreadCount} {totalUnreadCount === 1 ? 'unread message' : 'unread messages'}
+                  </span>
+                </div>
+              )}
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
+              >
+                ← Back to Dashboard
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -97,80 +280,9 @@ export default function MessagesPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading conversations...</p>
           </div>
-        ) : conversations.length > 0 ? (
+        ) : conversationsList ? (
           <div className="space-y-4">
-            {conversations.map((conversation) => {
-              // Check if it's a trip chat or 1-on-1 chat
-              if (conversation.trip_id) {
-                return (
-                  <Link
-                    key={conversation.trip_id}
-                    href={`/dashboard/trips/${conversation.trip_id}/chat`}
-                    className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl">🌍</span>
-                          <h3 className="text-xl font-semibold text-gray-900">
-                            {conversation.trip_title}
-                          </h3>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Group</span>
-                        </div>
-                        {conversation.last_message && (
-                          <>
-                            <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
-                            <p className="text-gray-500 text-sm mt-2">
-                              {new Date(conversation.last_message.created_at).toLocaleString()}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                      {conversation.unread_count > 0 && (
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
-                            {conversation.unread_count}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                );
-              } else {
-                // 1-on-1 chat
-                const otherUser = getOtherUser(conversation);
-                return (
-                  <Link
-                    key={conversation.user_id}
-                    href={`/dashboard/chat/${conversation.user_id}`}
-                    className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {conversation.user_name}
-                        </h3>
-                        {conversation.last_message && (
-                          <>
-                            <p className="text-gray-600 mt-1">{conversation.last_message.content}</p>
-                            <p className="text-gray-500 text-sm mt-2">
-                              {new Date(conversation.last_message.created_at).toLocaleString()}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                      {conversation.unread_count > 0 && (
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
-                            {conversation.unread_count}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                );
-              }
-            })}
+            {conversationsList}
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
