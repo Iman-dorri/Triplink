@@ -363,22 +363,45 @@ async def get_conversations(
         UserConnection.status == ConnectionStatus.ACCEPTED.value
     ).all()
     
+    # Convert current_user.id to UUID once for Message queries (Message uses UUID columns)
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
+    
     for conn in connections:
-        # Determine the other user
-        if conn.user_id == user_id_str:
-            other_user_id_str = conn.connected_user_id
+        # Determine the other user - ensure we're comparing strings correctly
+        # UserConnection stores IDs as strings, so convert both to strings for comparison
+        conn_user_id_str = str(conn.user_id).strip() if conn.user_id else None
+        conn_connected_id_str = str(conn.connected_user_id).strip() if conn.connected_user_id else None
+        
+        # Ensure we have valid IDs
+        if not conn_user_id_str or not conn_connected_id_str:
+            continue
+        
+        # Determine which one is the other user (not the current user)
+        if conn_user_id_str == user_id_str:
+            other_user_id_str = conn_connected_id_str
+        elif conn_connected_id_str == user_id_str:
+            other_user_id_str = conn_user_id_str
         else:
-            other_user_id_str = conn.user_id
+            # This shouldn't happen, but skip if neither matches
+            continue
+        
+        # Safety check: make sure we're not using the same user (string comparison)
+        if other_user_id_str == user_id_str:
+            continue
         
         # Convert to UUID for User query
-        other_user_id = UUID(other_user_id_str) if isinstance(other_user_id_str, str) else other_user_id_str
+        try:
+            other_user_id = UUID(other_user_id_str)
+        except (ValueError, TypeError):
+            continue
+        
+        # Final safety check: ensure other_user_id is different from user_uuid (UUID comparison)
+        if other_user_id == user_uuid:
+            continue
         
         other_user = db.query(User).filter(User.id == other_user_id).first()
         if not other_user:
             continue
-        
-        # Convert current_user.id to UUID for Message query (Message uses UUID columns)
-        user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
         
         # Get last message in conversation (only 1-on-1)
         last_message = db.query(Message).filter(

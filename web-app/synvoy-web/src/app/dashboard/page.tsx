@@ -83,13 +83,16 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <span className="text-sm sm:text-base text-gray-700 hidden sm:inline">Welcome, {user.first_name}!</span>
+              <span className="text-sm sm:text-base text-gray-700 hidden sm:inline font-medium">Welcome, {user.first_name}!</span>
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base text-gray-700 hover:text-gray-900 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+                className="group px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:border-red-200 hover:text-red-600 transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2"
               >
                 <span className="hidden sm:inline">Sign Out</span>
                 <span className="sm:hidden">Out</span>
+                <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
               </button>
             </div>
           </div>
@@ -106,33 +109,33 @@ export default function DashboardPage() {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <Link href="/dashboard/search">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
+          <Link href="/dashboard/search" className="h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 h-full flex flex-col">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🔍</div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">Find Users</h3>
-              <p className="text-sm sm:text-base text-gray-600">Search and connect with other travelers</p>
+              <p className="text-sm sm:text-base text-gray-600 flex-grow">Search and connect with other travelers</p>
             </div>
           </Link>
 
-          <Link href="/dashboard/connections">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
+          <Link href="/dashboard/connections" className="h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 h-full flex flex-col">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">👥</div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">Connections</h3>
-              <p className="text-sm sm:text-base text-gray-600">Manage your travel connections</p>
+              <p className="text-sm sm:text-base text-gray-600 flex-grow">Manage your travel connections</p>
             </div>
           </Link>
 
-          <Link href="/dashboard/trips">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
+          <Link href="/dashboard/trips" className="h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 h-full flex flex-col">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">✈️</div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">Trips</h3>
-              <p className="text-sm sm:text-base text-gray-600">Create and manage your trips</p>
+              <p className="text-sm sm:text-base text-gray-600 flex-grow">Create and manage your trips</p>
             </div>
           </Link>
 
-          <Link href="/dashboard/messages">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 relative">
+          <Link href="/dashboard/messages" className="h-full">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 relative h-full flex flex-col">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4 relative inline-block">
                 💬
                 {unreadCount > 0 && (
@@ -142,7 +145,7 @@ export default function DashboardPage() {
                 )}
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">Messages</h3>
-              <p className="text-sm sm:text-base text-gray-600">Chat with your connections</p>
+              <p className="text-sm sm:text-base text-gray-600 flex-grow">Chat with your connections</p>
             </div>
           </Link>
         </div>

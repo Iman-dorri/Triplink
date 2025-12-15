@@ -105,9 +105,12 @@ export default function ConnectionsPage() {
             </Link>
             <Link
               href="/dashboard"
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
+              className="group px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:border-blue-200 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2"
             >
-              ← Back to Dashboard
+              <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Dashboard
             </Link>
           </div>
         </div>
@@ -118,15 +121,15 @@ export default function ConnectionsPage() {
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Connections</h1>
 
         {/* Tabs */}
-        <div className="bg-white rounded-2xl p-2 shadow-lg mb-6 flex gap-2">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-2 shadow-lg mb-6 flex gap-2">
           {(['all', 'pending', 'accepted', 'blocked'] as ConnectionStatus[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all capitalize ${
+              className={`flex-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-semibold transition-all duration-300 capitalize text-sm sm:text-base ${
                 activeTab === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
+                  : 'text-gray-700 hover:bg-gray-100 hover:shadow-sm'
               }`}
             >
               {tab}
@@ -170,43 +173,55 @@ export default function ConnectionsPage() {
                       {connection.status}
                     </span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {connection.status === 'pending' && connection.connected_user_id === user.id && (
                       <>
                         <button
                           onClick={() => handleUpdateConnection(connection.id, 'accepted')}
                           disabled={updatingConnection === connection.id}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all disabled:opacity-50"
+                          className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
                         >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
                           Accept
                         </button>
                         <button
                           onClick={() => handleUpdateConnection(connection.id, 'blocked')}
                           disabled={updatingConnection === connection.id}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all disabled:opacity-50"
+                          className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 rounded-xl hover:from-red-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
                         >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                           Block
                         </button>
                       </>
                     )}
                     {connection.status === 'pending' && connection.user_id === user.id && (
-                      <span className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold">
+                      <span className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-gray-700 bg-gray-100 border border-gray-200 rounded-xl">
                         Request Sent
                       </span>
                     )}
                     {connection.status === 'accepted' && (
                       <Link
                         href={`/dashboard/chat/${otherUser?.id}`}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all"
+                        className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2"
                       >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
                         Message
                       </Link>
                     )}
                     <button
                       onClick={() => handleDeleteConnection(connection.id)}
                       disabled={updatingConnection === connection.id}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all disabled:opacity-50"
+                      className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                       Delete
                     </button>
                   </div>
