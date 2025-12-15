@@ -214,12 +214,28 @@ export default function TripChatPage() {
               <h2 className="text-xl font-semibold text-gray-900">{trip.title}</h2>
               <Link
                 href={`/dashboard/trips/${tripId}`}
-                className="group px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:border-blue-200 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2"
+                className="group relative px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-300 shadow-sm hover:shadow-lg flex items-center gap-2 sm:gap-3 overflow-hidden"
               >
-                <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                {/* Subtle background animation */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-100/50 to-cyan-100/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Icon with smooth animation */}
+                <svg 
+                  className="relative z-10 w-5 h-5 sm:w-6 sm:h-6 text-blue-600 transform group-hover:-translate-x-1 transition-transform duration-300" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2.5} 
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+                  />
                 </svg>
-                Back to Trip
+                
+                {/* Text */}
+                <span className="relative z-10">Back to Trip</span>
               </Link>
             </div>
           </div>

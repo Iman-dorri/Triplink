@@ -199,8 +199,25 @@ export default function ChatPage() {
       <nav className="bg-white/90 backdrop-blur-xl border-b border-white/20 shadow-lg shadow-blue-900/5 flex-shrink-0">
         <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-3">
-            <Link href="/dashboard/messages" className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-              <span className="text-xl sm:text-2xl">←</span>
+            <Link 
+              href="/dashboard/messages" 
+              className="group flex items-center space-x-2 sm:space-x-3 flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
+            >
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 group-hover:from-blue-100 group-hover:to-cyan-100 border border-blue-200/50 group-hover:border-blue-300 transition-all duration-200 shadow-sm group-hover:shadow-md">
+                <svg 
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 transform group-hover:-translate-x-0.5 transition-transform duration-200" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2.5} 
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+                  />
+                </svg>
+              </div>
               <div className="hidden sm:block">
                 <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
               </div>
