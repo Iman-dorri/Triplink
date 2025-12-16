@@ -132,6 +132,58 @@ npm install @reduxjs/toolkit react-redux axios
 npm run dev
 ```
 
+## 🐳 Docker Setup (Recommended)
+
+The easiest way to run the entire application is using Docker Compose. This sets up all services (database, backend, and frontend) automatically.
+
+### Quick Start with Docker
+
+```bash
+# Option 1: Use the quick start script
+./docker-start.sh
+
+# Option 2: Manual setup
+# 1. Copy environment file
+cp docker-compose.env.example .env
+
+# 2. Edit .env and update SECRET_KEY and POSTGRES_PASSWORD
+
+# 3. Start all services
+docker compose up -d
+
+# 4. View logs
+docker compose logs -f
+```
+
+### Services
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **Database**: PostgreSQL on port 5432
+
+### Common Docker Commands
+
+```bash
+# Start services
+docker compose up -d
+
+# Stop services
+docker compose stop
+
+# View logs
+docker compose logs -f
+
+# Rebuild after code changes
+docker compose build
+docker compose up -d
+
+# Stop and remove everything
+docker compose down -v
+```
+
+For detailed Docker documentation, see [README.DOCKER.md](README.DOCKER.md).
+
 ## 🔧 Development
 
 ### Backend Development

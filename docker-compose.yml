@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: triplink-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-triplink_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-triplink_secure_password_2024}
+      POSTGRES_DB: ${POSTGRES_DB:-triplink}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-triplink_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - triplink-network
+
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: triplink-backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-triplink_user}:${POSTGRES_PASSWORD:-triplink_secure_password_2024}@db:5432/${POSTGRES_DB:-triplink}
+      SECRET_KEY: ${SECRET_KEY:-your-super-secret-jwt-key-change-this-in-production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      PORT: 8000
+      HOST: 0.0.0.0
+      DEBUG: ${DEBUG:-True}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "
+        python wait-for-db.py &&
+        python init_db.py &&
+        uvicorn main:app --host 0.0.0.0 --port 8000
+      "
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - triplink-network
+    restart: unless-stopped
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./web-app/synvoy-web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: triplink-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - triplink-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  triplink-network:
+    driver: bridge
+

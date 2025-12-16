@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Base URL for your FastAPI backend
 const BASE_URL = typeof window !== 'undefined' 
-  ? (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.50.225:8000')
-  : 'http://192.168.50.225:8000';
+  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
 
 // Create axios instance
 const api = axios.create({

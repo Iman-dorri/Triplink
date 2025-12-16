@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+node_modules
+.idea
+.vscode
+*.log
+.env
+.env.local
+*.swp
+*.swo
+Document/
+docs/
+tests/
+scripts/
+mobile-app/
+
