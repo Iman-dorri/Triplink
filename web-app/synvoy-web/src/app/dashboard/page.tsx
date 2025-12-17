@@ -4,13 +4,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
-import { messageAPI } from '@/lib/api';
+import { messageAPI, connectionAPI } from '@/lib/api';
 
 export default function DashboardPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingConnectionsCount, setPendingConnectionsCount] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const connectionsIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -43,6 +45,38 @@ export default function DashboardPage() {
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+    };
+  }, [user]);
+
+  // Fetch pending connection requests count
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchPendingConnections = async () => {
+      try {
+        const connections = await connectionAPI.getConnections('pending');
+        // Count only connections where current user is the receiver (not the sender)
+        // A connection where user_id is current user means they sent it
+        // A connection where connected_user_id is current user means they received it
+        const pendingReceived = connections.filter((conn: any) => {
+          return conn.connected_user_id === user.id;
+        });
+        setPendingConnectionsCount(pendingReceived.length);
+      } catch (err) {
+        // Silently fail - don't show errors for pending connections count
+      }
+    };
+
+    // Initial fetch
+    fetchPendingConnections();
+
+    // Poll every 5 seconds
+    connectionsIntervalRef.current = setInterval(fetchPendingConnections, 5000);
+
+    return () => {
+      if (connectionsIntervalRef.current) {
+        clearInterval(connectionsIntervalRef.current);
       }
     };
   }, [user]);
@@ -119,8 +153,15 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/dashboard/connections" className="h-full">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 h-full flex flex-col">
-              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">👥</div>
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 relative h-full flex flex-col">
+              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4 relative inline-block">
+                👥
+                {pendingConnectionsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-red-600 text-[10px] sm:text-xs font-bold text-white">
+                    {pendingConnectionsCount > 99 ? '99+' : pendingConnectionsCount}
+                  </span>
+                )}
+              </div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">Connections</h3>
               <p className="text-sm sm:text-base text-gray-600 flex-grow">Manage your travel connections</p>
             </div>
