@@ -99,3 +99,10 @@ sudo docker compose logs -f frontend
 
 # Or use the quick start script
 ./docker-start.sh
+
+# Stop and remove all existing containers
+sudo docker compose down
+
+# Or if that doesn't work, remove them individually:
+sudo docker stop synvoy-db synvoy-backend synvoy-frontend synvoy-nginx
+sudo docker rm synvoy-db synvoy-backend synvoy-frontend synvoy-nginx

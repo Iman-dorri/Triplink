@@ -365,3 +365,4 @@ For issues, check:
 - Nginx logs: `sudo docker compose logs nginx`
 - Application logs in respective containers
 
+

@@ -15,6 +15,14 @@ security = HTTPBearer()
 @router.post("/register", response_model=TokenWithUser)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
+    # Check if username already exists (case-insensitive)
+    existing_username = db.query(User).filter(func.lower(User.username) == func.lower(user_data.username)).first()
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already taken. Please choose a different username."
+        )
+    
     # Check if user already exists (case-insensitive email comparison)
     existing_user = db.query(User).filter(func.lower(User.email) == func.lower(user_data.email)).first()
     if existing_user:
@@ -26,6 +34,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     db_user = User(
+        username=user_data.username.lower(),  # Store username in lowercase for consistency
         email=user_data.email,
         password_hash=hashed_password,
         first_name=user_data.first_name,
@@ -45,6 +54,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     # Convert user to response format
     user_response = UserResponse(
         id=str(db_user.id),  # Convert UUID to string
+        username=db_user.username,
         email=db_user.email,
         first_name=db_user.first_name,
         last_name=db_user.last_name,
@@ -100,6 +110,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     # Convert user to response format
     user_response = UserResponse(
         id=str(user.id),  # Convert UUID to string
+        username=user.username,
         email=user.email,
         first_name=user.first_name,
         last_name=user.last_name,
@@ -157,6 +168,7 @@ async def get_user_profile(
     """Get current authenticated user information."""
     return UserResponse(
         id=str(current_user.id),
+        username=current_user.username,
         email=current_user.email,
         first_name=current_user.first_name,
         last_name=current_user.last_name,

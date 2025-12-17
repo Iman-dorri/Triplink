@@ -145,3 +145,4 @@ sudo docker compose exec nginx nginx -s reload
 sudo docker compose exec nginx openssl s_client -connect www.synvoy.com:443 -servername www.synvoy.com
 ```
 
+

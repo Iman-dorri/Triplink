@@ -83,6 +83,7 @@ api.interceptors.response.use(
 export const authAPI = {
   // Register new user
   register: async (userData: {
+    username: string;
     first_name: string;
     last_name: string;
     email: string;
