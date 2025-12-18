@@ -270,7 +270,7 @@ export const connectionAPI = {
   // Get all connections
   getConnections: async (status?: string) => {
     try {
-      const url = status ? `/connections?status_filter=${status}` : '/connections';
+      const url = status ? `/connections/?status_filter=${status}` : '/connections/';
       const response = await api.get(url);
       return response.data;
     } catch (error: any) {
