@@ -113,14 +113,14 @@ export default function TripDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50 shadow-lg shadow-blue-900/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <Link href="/dashboard/trips" className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🌍</span>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 gap-2">
+            <Link href="/dashboard/trips" className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-xl sm:text-2xl">🌍</span>
               </div>
               <div>
-                <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
               </div>
             </Link>
             <Link
@@ -130,34 +130,35 @@ export default function TripDetailPage() {
               <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Back to Trips
+              <span className="hidden sm:inline">Back to Trips</span>
+              <span className="sm:hidden">Back</span>
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 lg:py-12">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 sm:mb-6">
             {error}
           </div>
         )}
 
         {/* Trip Info */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <h1 className="text-4xl font-bold text-gray-900">{trip.title}</h1>
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 flex-1">{trip.title}</h1>
             {currentParticipant?.status === 'pending' && (
-              <span className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+              <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-yellow-100 text-yellow-800 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap">
                 ⏳ Pending Invitation
               </span>
             )}
           </div>
           {trip.description && (
-            <p className="text-gray-600 mb-4">{trip.description}</p>
+            <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">{trip.description}</p>
           )}
-          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-4">
             {trip.start_date && (
               <span>📅 Start: {new Date(trip.start_date).toLocaleDateString()}</span>
             )}
@@ -167,7 +168,7 @@ export default function TripDetailPage() {
             {trip.budget && (
               <span>💰 Budget: ${trip.budget}</span>
             )}
-            <span className={`px-3 py-1 rounded-full font-medium ${
+            <span className={`px-2 sm:px-3 py-1 rounded-full font-medium ${
               trip.status === 'active'
                 ? 'bg-green-100 text-green-800'
                 : trip.status === 'completed'
@@ -182,7 +183,7 @@ export default function TripDetailPage() {
           {currentParticipant?.status === 'accepted' && (
             <Link
               href={`/dashboard/trips/${tripId}/chat`}
-              className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all"
+              className="inline-block w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-blue-600 text-white rounded-lg sm:rounded-xl font-semibold hover:bg-blue-700 transition-all text-center"
             >
               💬 Open Group Chat
             </Link>
@@ -190,15 +191,15 @@ export default function TripDetailPage() {
         </div>
 
         {/* Participants */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Participants</h2>
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Participants</h2>
             {isCreator && (
               <button
                 onClick={handleOpenInviteModal}
-                className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
+                className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Invite Users
@@ -208,24 +209,24 @@ export default function TripDetailPage() {
 
           {/* Accepted Participants */}
           {acceptedParticipants.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-3">Accepted ({acceptedParticipants.length})</h3>
-              <div className="space-y-3">
+            <div className="mb-4 sm:mb-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2 sm:mb-3">Accepted ({acceptedParticipants.length})</h3>
+              <div className="space-y-2 sm:space-y-3">
                 {acceptedParticipants.map((participant: any) => (
-                  <div key={participant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">
+                  <div key={participant.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
                         {participant.user?.first_name} {participant.user?.last_name}
                         {participant.role === 'creator' && ' (Creator)'}
                       </p>
-                      <p className="text-sm text-gray-600">{participant.user?.email}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">{participant.user?.email}</p>
                     </div>
                     {participant.user_id === user.id && (
                       <Link
                         href={`/dashboard/trips/${tripId}/chat`}
-                        className="px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2"
+                        className="w-full sm:w-auto px-3 sm:px-4 md:px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                         Chat
@@ -240,22 +241,22 @@ export default function TripDetailPage() {
           {/* Pending Invitations */}
           {pendingParticipants.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-3">Pending Invitations ({pendingParticipants.length})</h3>
-              <div className="space-y-3">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2 sm:mb-3">Pending Invitations ({pendingParticipants.length})</h3>
+              <div className="space-y-2 sm:space-y-3">
                 {pendingParticipants.map((participant: any) => (
-                  <div key={participant.id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">
+                  <div key={participant.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 p-3 bg-yellow-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
                         {participant.user?.first_name} {participant.user?.last_name}
                       </p>
-                      <p className="text-sm text-gray-600">{participant.user?.email}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">{participant.user?.email}</p>
                     </div>
                     {participant.user_id === user.id && participant.status === 'pending' && (
                       <button
                         onClick={() => handleAcceptInvitation(participant.id)}
-                        className="px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2"
+                        className="w-full sm:w-auto px-3 sm:px-4 md:px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         Accept
@@ -271,23 +272,23 @@ export default function TripDetailPage() {
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Users to Trip</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Invite Users to Trip</h2>
             {loadingConnections ? (
-              <div className="text-center py-8">
+              <div className="text-center py-6 sm:py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading connections...</p>
+                <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-600">Loading connections...</p>
               </div>
             ) : availableConnections.length > 0 ? (
-              <div className="space-y-3 mb-6">
+              <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                 {availableConnections.map((conn: any) => {
                   const otherUser = conn.user_id === user.id ? conn.connected_user : conn.user;
                   const isSelected = selectedUsers.includes(otherUser.id);
                   return (
                     <label
                       key={conn.id}
-                      className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                      className={`flex items-center p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition-all ${
                         isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -301,20 +302,20 @@ export default function TripDetailPage() {
                             setSelectedUsers(selectedUsers.filter(id => id !== otherUser.id));
                           }
                         }}
-                        className="mr-3"
+                        className="mr-2 sm:mr-3"
                       />
-                      <div>
-                        <p className="font-medium text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
                           {otherUser.first_name} {otherUser.last_name}
                         </p>
-                        <p className="text-sm text-gray-600">{otherUser.email}</p>
+                        <p className="text-xs sm:text-sm text-gray-600 truncate">{otherUser.email}</p>
                       </div>
                     </label>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-gray-600 mb-6">No available connections to invite.</p>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">No available connections to invite.</p>
             )}
             <div className="flex gap-3 sm:gap-4">
               <button
