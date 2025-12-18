@@ -21,6 +21,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Ensure we never use HTTP for production
+  maxRedirects: 0, // Prevent following redirects that might go to HTTP
 });
 
 // Request interceptor to set baseURL dynamically and add auth token
@@ -32,21 +34,45 @@ api.interceptors.request.use(
       // Check if we're on the production domain (use /api path) or localhost (use :8000)
       const hostname = window.location.hostname;
       const currentProtocol = window.location.protocol;
-      const port = window.location.port;
       
       // If on production domain (synvoy.com), use /api path through nginx
-      // Always use HTTPS for production domain to avoid mixed content errors
+      // ALWAYS force HTTPS for production domain to avoid mixed content errors
       if (hostname.includes('synvoy.com')) {
-        // Production: use /api path through nginx, force HTTPS
-        const protocol = currentProtocol === 'https:' ? 'https:' : 'https:'; // Always HTTPS for production
-        config.baseURL = `${protocol}//${hostname}/api`;
+        // Production: use /api path through nginx, ALWAYS force HTTPS
+        config.baseURL = `https://${hostname}/api`;
+        
+        // Ensure URL is properly formatted
+        if (config.url) {
+          config.url = config.url.startsWith('/') ? config.url : '/' + config.url;
+        }
+        
+        // CRITICAL: Override any existing baseURL or URL that might be HTTP
+        // Force the full URL to be HTTPS
+        const fullUrl = config.baseURL + (config.url || '');
+        if (fullUrl.includes('http://')) {
+          config.baseURL = config.baseURL.replace('http://', 'https://');
+        }
       } else {
         // Development/local: use direct backend port with current protocol
         config.baseURL = `${currentProtocol}//${hostname}:8000`;
       }
       
-      // Log for debugging
-      console.log('[API] Request to:', config.baseURL + (config.url || ''), 'from hostname:', hostname, 'protocol:', currentProtocol);
+      // Final safety check: if baseURL somehow has http://, replace it with https:// for production
+      if (hostname.includes('synvoy.com')) {
+        if (config.baseURL && config.baseURL.startsWith('http://')) {
+          config.baseURL = config.baseURL.replace('http://', 'https://');
+        }
+        // Also check the full URL
+        const finalUrl = (config.baseURL || '') + (config.url || '');
+        if (finalUrl.startsWith('http://')) {
+          config.baseURL = `https://${hostname}/api`;
+        }
+      }
+      
+      // Log for debugging - show what we're actually sending
+      const finalBaseURL = config.baseURL || '';
+      const finalURL = config.url || '';
+      console.log('[API] Request to:', finalBaseURL + finalURL, 'from hostname:', hostname, 'protocol:', currentProtocol);
     } else {
       // Server-side fallback (shouldn't happen for API calls, but just in case)
       config.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -59,6 +85,7 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    
     return config;
   },
   (error) => {
