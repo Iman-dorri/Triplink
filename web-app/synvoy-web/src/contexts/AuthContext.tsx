@@ -5,6 +5,7 @@ import { authAPI, storage } from '@/lib/api';
 
 interface User {
   id: string;
+  username: string;
   email: string;
   first_name: string;
   last_name: string;
@@ -20,6 +21,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: {
+    username: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -93,6 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (userData: {
+    username: string;
     first_name: string;
     last_name: string;
     email: string;
