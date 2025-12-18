@@ -39,24 +39,78 @@ api.interceptors.request.use(
       // ALWAYS force HTTPS for production domain to avoid mixed content errors
       if (hostname.includes('synvoy.com')) {
         // Production: use /api path through nginx, ALWAYS force HTTPS
-        // CRITICAL: Delete any existing baseURL first to prevent conflicts
-        delete config.baseURL;
+        // Get the URL path and clean it
+        let urlPath = config.url || '';
         
-        // Set the full URL directly to ensure HTTPS
-        const urlPath = config.url || '';
-        const cleanUrl = urlPath.startsWith('/') ? urlPath : '/' + urlPath;
+        // If url is a full URL, extract just the path
+        if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) {
+          try {
+            const urlObj = new URL(urlPath);
+            urlPath = urlObj.pathname + urlObj.search;
+          } catch (e) {
+            // If parsing fails, extract path manually
+            urlPath = urlPath.replace(/^https?:\/\/[^/]+/, '');
+          }
+        }
         
-        // Construct full HTTPS URL
-        config.url = `https://${hostname}/api${cleanUrl}`;
-        config.baseURL = ''; // Clear baseURL so axios uses the full URL
+        // Ensure path starts with / and doesn't already have /api
+        urlPath = urlPath.startsWith('/') ? urlPath : '/' + urlPath;
+        urlPath = urlPath.replace(/^\/api/, ''); // Remove /api if present
+        urlPath = urlPath.startsWith('/') ? urlPath : '/' + urlPath;
+        
+        // Set baseURL to HTTPS with /api prefix - this is the final value
+        config.baseURL = `https://${hostname}/api`;
+        config.url = urlPath;
       } else {
         // Development/local: use direct backend port with current protocol
         config.baseURL = `${currentProtocol}//${hostname}:8000`;
       }
       
+      // Final safety check: NEVER allow HTTP for production
+      if (hostname.includes('synvoy.com')) {
+        // Force HTTPS - replace any HTTP with HTTPS
+        if (config.baseURL && config.baseURL.startsWith('http://')) {
+          config.baseURL = config.baseURL.replace('http://', 'https://');
+        }
+        // Also check if url somehow has http://
+        if (config.url && config.url.includes('http://')) {
+          config.url = config.url.replace(/http:\/\//g, 'https://');
+        }
+        
+        // CRITICAL: Validate the final URL before request
+        const finalUrl = (config.baseURL || '') + (config.url || '');
+        if (finalUrl.includes('http://')) {
+          console.error('[API ERROR] Detected HTTP in final URL, forcing HTTPS:', finalUrl);
+          config.baseURL = `https://${hostname}/api`;
+          // Reconstruct URL
+          if (config.url) {
+            config.url = config.url.replace(/^https?:\/\/[^/]+/, '').replace(/^\/api/, '');
+            config.url = config.url.startsWith('/') ? config.url : '/' + config.url;
+          }
+        }
+      }
+      
       // Log for debugging - show what we're actually sending
-      const finalUrl = config.url || (config.baseURL || '') + (config.url || '');
-      console.log('[API] Request to:', finalUrl, 'from hostname:', hostname, 'protocol:', currentProtocol);
+      const finalUrl = (config.baseURL || '') + (config.url || '');
+      console.log('[API v2.0] Request to:', finalUrl, 'from hostname:', hostname, 'protocol:', currentProtocol);
+      console.log('[API DEBUG] Config details:', {
+        baseURL: config.baseURL,
+        url: config.url,
+        method: config.method,
+        headers: config.headers
+      });
+      
+      // Final validation - throw error if HTTP detected for production
+      if (hostname.includes('synvoy.com') && finalUrl.includes('http://')) {
+        console.error('[API CRITICAL ERROR] HTTP detected in production URL!', finalUrl);
+        console.error('[API CRITICAL ERROR] Config:', config);
+        // Force correct URL instead of throwing (to prevent breaking the app)
+        config.baseURL = `https://${hostname}/api`;
+        if (config.url) {
+          config.url = config.url.replace(/^https?:\/\/[^/]+/, '').replace(/^\/api/, '');
+          config.url = config.url.startsWith('/') ? config.url : '/' + config.url;
+        }
+      }
     } else {
       // Server-side fallback (shouldn't happen for API calls, but just in case)
       config.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -77,10 +131,29 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token expiration
+// Response interceptor to handle token expiration and redirects
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Check if response has a redirect to HTTP (should never happen)
+    if (typeof window !== 'undefined' && window.location.hostname.includes('synvoy.com')) {
+      const responseUrl = response.request?.responseURL || response.config?.url || '';
+      if (responseUrl.includes('http://')) {
+        console.error('[API ERROR] Response URL contains HTTP:', responseUrl);
+      }
+    }
+    return response;
+  },
   (error) => {
+    // Check if error is due to HTTP redirect
+    if (error.config && typeof window !== 'undefined' && window.location.hostname.includes('synvoy.com')) {
+      const requestUrl = error.config.url || '';
+      const baseURL = error.config.baseURL || '';
+      const fullUrl = baseURL + requestUrl;
+      if (fullUrl.includes('http://')) {
+        console.error('[API ERROR] Request URL contains HTTP:', fullUrl, error.config);
+      }
+    }
+    
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       // Token expired, clear storage and redirect to login
       localStorage.removeItem('auth_token');
