@@ -31,21 +31,22 @@ api.interceptors.request.use(
     if (typeof window !== 'undefined') {
       // Check if we're on the production domain (use /api path) or localhost (use :8000)
       const hostname = window.location.hostname;
-      const protocol = window.location.protocol;
+      const currentProtocol = window.location.protocol;
       const port = window.location.port;
       
       // If on production domain (synvoy.com), use /api path through nginx
-      // Otherwise (localhost or IP), use direct backend port
+      // Always use HTTPS for production domain to avoid mixed content errors
       if (hostname.includes('synvoy.com')) {
-        // Production: use /api path through nginx
+        // Production: use /api path through nginx, force HTTPS
+        const protocol = currentProtocol === 'https:' ? 'https:' : 'https:'; // Always HTTPS for production
         config.baseURL = `${protocol}//${hostname}/api`;
       } else {
-        // Development/local: use direct backend port
-        config.baseURL = `${protocol}//${hostname}:8000`;
+        // Development/local: use direct backend port with current protocol
+        config.baseURL = `${currentProtocol}//${hostname}:8000`;
       }
       
       // Log for debugging
-      console.log('[API] Request to:', config.baseURL + (config.url || ''), 'from hostname:', hostname);
+      console.log('[API] Request to:', config.baseURL + (config.url || ''), 'from hostname:', hostname, 'protocol:', currentProtocol);
     } else {
       // Server-side fallback (shouldn't happen for API calls, but just in case)
       config.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';

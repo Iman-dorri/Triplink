@@ -135,3 +135,13 @@ docker rmi synvoy_frontend:latest
 # Rebuild and start the frontend
 docker-compose build frontend
 docker-compose up -d frontend
+
+After changes in both backend and frontend on server:
+cd ~/Synvoy
+
+# Stop and remove the backend and frontend containers
+docker-compose stop backend frontend
+docker-compose rm -f backend frontend
+
+# Rebuild and start them
+docker-compose up -d --build backend frontend
