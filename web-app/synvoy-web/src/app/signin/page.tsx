@@ -2,72 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-interface LoginModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSwitchToRegister: () => void;
-}
-
-export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
+export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
   const { login } = useAuth();
+  const router = useRouter();
 
-  // Handle visibility for smooth transitions and prevent body scroll
+  // Animate form appearance after page transition starts
   useEffect(() => {
-    let savedScrollY = 0;
+    // Page transition: 350ms fade out + 200ms delay = 550ms before fade in starts
+    // Start form animation shortly after page transition fade-in begins
+    const timer = setTimeout(() => {
+      setFormVisible(true);
+    }, 400); // Short delay after page transition starts
     
-    if (isOpen) {
-      // Save current scroll position
-      savedScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
-      
-      // Lock body scroll and prevent horizontal overflow
-      const originalOverflow = document.body.style.overflow;
-      const originalOverflowX = document.body.style.overflowX;
-      const originalPosition = document.body.style.position;
-      const originalTop = document.body.style.top;
-      const originalWidth = document.body.style.width;
-      
-      // Lock scroll position
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${savedScrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-      document.body.style.overflowX = 'hidden';
-      
-      // Small delay to trigger animation
-      requestAnimationFrame(() => {
-        setIsVisible(true);
-      });
-      
-      return () => {
-        // Restore body styles first
-        document.body.style.position = originalPosition;
-        document.body.style.top = originalTop;
-        document.body.style.width = originalWidth;
-        document.body.style.overflow = originalOverflow;
-        document.body.style.overflowX = originalOverflowX;
-        
-        // Restore scroll position after a brief delay to ensure styles are applied
-        requestAnimationFrame(() => {
-          window.scrollTo({
-            top: savedScrollY,
-            behavior: 'auto'
-          });
-        });
-      };
-    } else {
-      setIsVisible(false);
-    }
-  }, [isOpen]);
-
-  // Don't render if not open (for accessibility and performance)
-  if (!isOpen) return null;
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,8 +33,8 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
     try {
       await login(email, password);
-      onClose();
       // Redirect will happen automatically via AuthContext
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
@@ -86,79 +43,42 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
   };
 
   return (
-    <>
-      {/* Backdrop with fade animation */}
-      <div 
-        className={`fixed bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out z-[49] ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100%',
-          height: '100%',
-          overflow: 'hidden'
-        }}
-      />
-      
-      {/* Modal container - centered in viewport */}
-      <div 
-        className="fixed z-50 flex items-center justify-center"
-        style={{ 
-          position: 'fixed', 
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: '100vh',
-          width: '100%',
-          maxWidth: '100vw',
-          padding: '1rem',
-          pointerEvents: 'none',
-          overflow: 'auto',
-          boxSizing: 'border-box'
-        }}
-      >
-        {/* Modal with scale and slide animation */}
-        <div 
-          className={`transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-400 ease-out w-full max-w-md pointer-events-auto my-auto ${
-            isVisible 
-              ? 'opacity-100 scale-100 translate-y-0' 
-              : 'opacity-0 scale-95 translate-y-4'
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 md:py-12">
+      <div className="w-full max-w-md">
+        {/* Back to home link */}
+        <Link 
+          href="/"
+          className={`group inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white/90 backdrop-blur-sm text-gray-700 rounded-lg sm:rounded-xl hover:bg-white hover:text-blue-600 mb-4 sm:mb-6 text-sm sm:text-base font-medium shadow-md hover:shadow-lg border border-gray-200/50 hover:border-blue-300 transition-all duration-500 ease-out ${
+            formVisible 
+              ? 'opacity-100 translate-y-0' 
+              : 'opacity-0 translate-y-8'
           }`}
-          style={{
-            transition: 'opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            maxHeight: 'calc(100vh - 2rem)',
-            margin: 'auto'
-          }}
-          onClick={(e) => e.stopPropagation()}
+        >
+          <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 transition-transform duration-300 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Back to Home</span>
+        </Link>
+
+        {/* Form Card */}
+        <div 
+          className={`bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden transition-all duration-500 ease-out ${
+            formVisible 
+              ? 'opacity-100 translate-y-0' 
+              : 'opacity-0 translate-y-8'
+          }`}
         >
           {/* Header with gradient */}
-          <div className="bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 px-8 py-6 relative">
+          <div className="bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 relative">
             <div className="absolute inset-0 bg-black/5"></div>
-            <div className="relative flex items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-1">Welcome Back</h3>
-                <p className="text-blue-100 text-sm">Sign in to continue your journey</p>
-              </div>
-              <button
-                onClick={onClose}
-                className="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all duration-300 backdrop-blur-sm"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+            <div className="relative">
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">Welcome Back</h3>
+              <p className="text-blue-100 text-xs sm:text-sm">Sign in to continue your journey</p>
             </div>
           </div>
 
           {/* Form Content */}
-          <div className="px-8 py-8">
+          <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-7 md:py-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg flex items-start space-x-2 animate-shake">
@@ -171,12 +91,12 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -186,7 +106,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50 focus:bg-white"
+                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50 focus:bg-white"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -194,12 +114,12 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
               {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
@@ -209,13 +129,13 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50 focus:bg-white"
+                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50 focus:bg-white"
                     placeholder="Enter your password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
                   >
                     {showPassword ? (
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,17 +152,17 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               </div>
 
               {/* Remember me & Forgot password */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
                 <label className="flex items-center cursor-pointer group">
                   <input 
                     type="checkbox" 
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer" 
                   />
-                  <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Remember me</span>
+                  <span className="ml-2 text-xs sm:text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Remember me</span>
                 </label>
                 <button
                   type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors touch-manipulation"
                 >
                   Forgot password?
                 </button>
@@ -252,7 +172,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 text-white py-3.5 px-4 rounded-xl hover:from-blue-700 hover:via-cyan-700 hover:to-teal-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
+                className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 text-white py-3 sm:py-3.5 px-4 rounded-lg sm:rounded-xl hover:from-blue-700 hover:via-cyan-700 hover:to-teal-700 transition-all duration-300 font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2 touch-manipulation"
               >
                 {loading ? (
                   <>
@@ -287,21 +207,20 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
             {/* Sign up link */}
             <div className="text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Don't have an account?{' '}
-                <button
-                  type="button"
-                  onClick={onSwitchToRegister}
-                  className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-300"
+                <Link
+                  href="/register"
+                  className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-300 touch-manipulation"
                 >
                   Create one now
-                </button>
+                </Link>
               </p>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

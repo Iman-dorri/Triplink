@@ -3,14 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import LoginModal from '@/components/auth/LoginModal'
-import RegisterModal from '@/components/auth/RegisterModal'
+import Link from 'next/link'
 
 export default function HomePage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
-  const [showLogin, setShowLogin] = useState(false)
-  const [showRegister, setShowRegister] = useState(false)
   const [activeFeature, setActiveFeature] = useState(0)
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set())
   const [visibleFeatures, setVisibleFeatures] = useState<Set<number>>(new Set())
@@ -227,6 +224,8 @@ export default function HomePage() {
 
   // Scroll effect for navigation and scroll direction detection
   useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout
+    
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       
@@ -243,16 +242,25 @@ export default function HomePage() {
         setScrollDirection('up')
       }
       
-      // Close mobile menu on scroll
+      // Close mobile menu on scroll (with debounce to prevent immediate closing)
       if (mobileMenuOpen) {
-        setMobileMenuOpen(false)
+        clearTimeout(scrollTimeout)
+        scrollTimeout = setTimeout(() => {
+          // Only close if scroll is significant (more than 10px)
+          if (Math.abs(currentScrollY - lastScrollY.current) > 10) {
+            setMobileMenuOpen(false)
+          }
+        }, 100)
       }
       
       lastScrollY.current = currentScrollY
     }
     
     window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      clearTimeout(scrollTimeout)
+    }
   }, [mobileMenuOpen])
 
 
@@ -333,9 +341,9 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 animate-fadeIn">
       {/* Navigation */}
-      <nav className={`bg-white/90 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50 shadow-lg shadow-blue-900/5 transition-all duration-300 ${
+      <nav className={`bg-white/90 backdrop-blur-xl border-b border-white/20 sticky top-0 z-[100] shadow-lg shadow-blue-900/5 transition-all duration-300 w-full ${
         scrolled ? 'bg-white/95 shadow-xl' : ''
       }`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
@@ -354,31 +362,35 @@ export default function HomePage() {
             <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
               <a href="#features" className="text-sm lg:text-base text-gray-700 hover:text-blue-600 transition-colors font-medium">Features</a>
               <a href="#pricing" className="text-sm lg:text-base text-gray-700 hover:text-blue-600 transition-colors font-medium">Pricing</a>
-              <a href="/about" className="text-sm lg:text-base text-gray-700 hover:text-blue-600 transition-colors font-medium">About</a>
+              <Link href="/about" className="text-sm lg:text-base text-gray-700 hover:text-blue-600 transition-colors font-medium">About</Link>
               <a href="#contact" className="text-sm lg:text-base text-gray-700 hover:text-blue-600 transition-colors font-medium">Contact</a>
             </div>
             
             {/* Desktop Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <button 
-                onClick={() => setShowLogin(true)}
+              <Link 
+                href="/signin"
                 className="px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base border-2 border-blue-600 text-blue-600 rounded-lg sm:rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold shadow-lg hover:shadow-xl whitespace-nowrap"
               >
                 Sign In
-              </button>
-              <button 
-                onClick={() => setShowRegister(true)}
+              </Link>
+              <Link 
+                href="/register"
                 className="px-4 lg:px-8 py-2 lg:py-3 text-sm lg:text-base bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl whitespace-nowrap"
               >
                 Get Started Free
-              </button>
+              </Link>
             </div>
 
             {/* Mobile Hamburger Button */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+              onClick={(e) => {
+                e.stopPropagation()
+                setMobileMenuOpen(!mobileMenuOpen)
+              }}
+              className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200 relative z-[101]"
               aria-label="Toggle menu"
+              type="button"
             >
               <svg
                 className={`w-6 h-6 transition-transform duration-300 ${mobileMenuOpen ? 'rotate-90' : ''}`}
@@ -400,58 +412,86 @@ export default function HomePage() {
 
           {/* Mobile Menu */}
           <div
-            className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-              mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out relative z-[100] bg-white ${
+              mobileMenuOpen ? 'max-h-96 opacity-100 visible' : 'max-h-0 opacity-0 invisible'
             }`}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="py-4 space-y-3 border-t border-gray-200 mt-2">
               <a
                 href="#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setMobileMenuOpen(false)
+                  setTimeout(() => {
+                    const element = document.getElementById('features')
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }, 100)
+                }}
+                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors font-medium"
               >
                 Features
               </a>
               <a
                 href="#pricing"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setMobileMenuOpen(false)
+                  setTimeout(() => {
+                    const element = document.getElementById('pricing')
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }, 100)
+                }}
+                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors font-medium"
               >
                 Pricing
               </a>
               <a
                 href="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setMobileMenuOpen(false)
+                  router.push('/about')
+                }}
+                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors font-medium"
               >
                 About
               </a>
               <a
                 href="#contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setMobileMenuOpen(false)
+                  setTimeout(() => {
+                    const element = document.getElementById('contact')
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }, 100)
+                }}
+                className="block px-4 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors font-medium"
               >
                 Contact
               </a>
               <div className="pt-2 space-y-2 border-t border-gray-200">
-                <button
-                  onClick={() => {
-                    setShowLogin(true)
-                    setMobileMenuOpen(false)
-                  }}
-                  className="w-full px-4 py-2.5 text-base border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold shadow-lg"
+                <Link
+                  href="/signin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full px-4 py-2.5 text-base border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold shadow-lg text-center"
                 >
                   Sign In
-                </button>
-                <button
-                  onClick={() => {
-                    setShowRegister(true)
-                    setMobileMenuOpen(false)
-                  }}
-                  className="w-full px-4 py-2.5 text-base bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-semibold shadow-lg"
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full px-4 py-2.5 text-base bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-semibold shadow-lg text-center"
                 >
                   Get Started Free
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -487,13 +527,13 @@ export default function HomePage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-              <button 
-                onClick={() => setShowRegister(true)}
+              <Link 
+                href="/register"
                 className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xl rounded-2xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-semibold shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 flex items-center space-x-3"
               >
                 <span>Start Planning Free</span>
                 <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
-              </button>
+              </Link>
               <button 
                 className="px-10 py-5 border-2 border-gray-300 text-gray-700 text-xl rounded-2xl hover:border-blue-600 hover:text-blue-600 transition-all duration-300 font-semibold bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center space-x-3"
               >
@@ -732,13 +772,13 @@ export default function HomePage() {
             Start your journey today with our free plan.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <button 
-              onClick={() => setShowRegister(true)}
+            <Link 
+              href="/register"
               className="px-12 py-5 bg-white text-blue-600 text-xl rounded-2xl hover:bg-gray-50 transition-all duration-300 font-bold shadow-2xl hover:shadow-3xl transform hover:-translate-y-2"
             >
               Get Started Free
               <span className="ml-3">🚀</span>
-            </button>
+            </Link>
             <button className="px-12 py-5 border-2 border-white/30 text-white text-xl rounded-2xl hover:bg-white/10 transition-all duration-300 font-semibold backdrop-blur-sm">
               View Pricing
             </button>
@@ -838,23 +878,6 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Auth Modals */}
-      <LoginModal
-        isOpen={showLogin}
-        onClose={() => setShowLogin(false)}
-        onSwitchToRegister={() => {
-          setShowLogin(false)
-          setShowRegister(true)
-        }}
-      />
-      <RegisterModal
-        isOpen={showRegister}
-        onClose={() => setShowRegister(false)}
-        onSwitchToLogin={() => {
-          setShowRegister(false)
-          setShowLogin(true)
-        }}
-      />
     </div>
   )
 }

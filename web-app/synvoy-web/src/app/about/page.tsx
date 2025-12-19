@@ -26,11 +26,25 @@ export default function AboutPage() {
   const whyChooseRefs = useRef<(HTMLDivElement | null)[]>([])
   const [visibleWhyChoose, setVisibleWhyChoose] = useState<Set<number>>(new Set())
 
-  // Smooth scroll behavior
+  // Ensure page starts at top and handle scroll restoration
   useEffect(() => {
+    // Scroll to top on mount
+    window.scrollTo(0, 0)
+    
+    // Disable browser scroll restoration
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+    
+    // Set smooth scroll behavior
     document.documentElement.style.scrollBehavior = 'smooth'
+    
     return () => {
       document.documentElement.style.scrollBehavior = 'auto'
+      // Re-enable scroll restoration on unmount
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto'
+      }
     }
   }, [])
 
@@ -315,9 +329,9 @@ export default function AboutPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-x-hidden animate-fadeIn">
       {/* Navigation */}
-      <nav className={`bg-white/90 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50 shadow-lg shadow-blue-900/5 transition-all duration-300 ${
+      <nav className={`bg-white/90 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50 shadow-lg shadow-blue-900/5 transition-all duration-300 w-full ${
         scrolled ? 'bg-white/95 shadow-xl' : ''
       }`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
@@ -401,22 +415,22 @@ export default function AboutPage() {
         </div>
 
         {/* Enhanced Background Elements with Parallax */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div 
-            className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full opacity-30 blur-3xl animate-pulse float transition-transform duration-300 ease-out"
+            className="absolute -top-40 -right-40 w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full opacity-30 blur-3xl animate-pulse float transition-transform duration-300 ease-out"
             style={{ 
               transform: `translateY(${scrollDirection === 'down' ? scrollY * 0.1 : scrollY * 0.05}px)`
             }}
           ></div>
           <div 
-            className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-teal-200 to-emerald-200 rounded-full opacity-30 blur-3xl animate-pulse animation-delay-1000 float transition-transform duration-300"
+            className="absolute -bottom-40 -left-40 w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-teal-200 to-emerald-200 rounded-full opacity-30 blur-3xl animate-pulse animation-delay-1000 float transition-transform duration-300"
             style={{ 
               animationDelay: '1s',
               transform: `translateY(${scrollDirection === 'down' ? -scrollY * 0.15 : -scrollY * 0.08}px)`
             }}
           ></div>
           <div 
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full opacity-20 blur-3xl animate-pulse animation-delay-2000 float transition-transform duration-300"
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full opacity-20 blur-3xl animate-pulse animation-delay-2000 float transition-transform duration-300"
             style={{ 
               animationDelay: '2s',
               transform: `translate(-50%, calc(-50% + ${scrollDirection === 'down' ? scrollY * 0.08 : scrollY * 0.04}px))`
@@ -429,7 +443,7 @@ export default function AboutPage() {
       <section 
         ref={missionRef}
         id="mission"
-        className={`py-20 sm:py-24 lg:py-32 bg-white transition-all duration-700 ease-out ${
+        className={`w-full py-20 sm:py-24 lg:py-32 bg-white transition-all duration-700 ease-out ${
           visibleSections.has('mission') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 scale-95'
         }`}
       >
@@ -437,8 +451,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16">
             {/* Mission */}
             <div 
-              className={`transition-all ease-in-out ${
-                visibleSections.has('mission') ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-20'
+              className={`transition-all ease-in-out overflow-hidden ${
+                visibleSections.has('mission') ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 sm:-translate-x-20'
               }`}
               style={{ 
                 transitionDuration: '1500ms',
@@ -459,8 +473,8 @@ export default function AboutPage() {
 
             {/* Vision */}
             <div 
-              className={`transition-all ease-in-out ${
-                visibleSections.has('mission') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'
+              className={`transition-all ease-in-out overflow-hidden ${
+                visibleSections.has('mission') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 sm:translate-x-20'
               }`}
               style={{ 
                 transitionDuration: '1500ms',
@@ -498,7 +512,7 @@ export default function AboutPage() {
       <section 
         ref={featuresRef}
         id="features"
-        className={`py-20 sm:py-24 lg:py-32 bg-gradient-to-br from-gray-50 to-blue-50 transition-all duration-700 ease-out ${
+        className={`w-full py-20 sm:py-24 lg:py-32 bg-gradient-to-br from-gray-50 to-blue-50 transition-all duration-700 ease-out ${
           visibleSections.has('features') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 scale-95'
         }`}
       >
@@ -552,7 +566,7 @@ export default function AboutPage() {
       <section 
         ref={valuesRef}
         id="values"
-        className={`py-20 sm:py-24 lg:py-32 bg-white transition-all duration-700 ease-out ${
+        className={`w-full py-20 sm:py-24 lg:py-32 bg-white transition-all duration-700 ease-out ${
           visibleSections.has('values') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 scale-95'
         }`}
       >
@@ -604,7 +618,7 @@ export default function AboutPage() {
       <section 
         ref={teamRef}
         id="why-choose"
-        className={`py-20 sm:py-24 lg:py-32 bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 relative overflow-hidden transition-all duration-700 ease-out ${
+        className={`w-full py-20 sm:py-24 lg:py-32 bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 relative overflow-hidden transition-all duration-700 ease-out ${
           visibleSections.has('why-choose') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 scale-95'
         }`}
       >
@@ -688,7 +702,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 sm:py-24 bg-white">
+      <section className="w-full py-20 sm:py-24 bg-white">
         <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
             Ready to Start Your Journey?
@@ -726,7 +740,7 @@ export default function AboutPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 sm:py-16">
+      <footer className="w-full bg-gray-900 text-white py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
             <div className="flex items-center space-x-2 sm:space-x-3">
