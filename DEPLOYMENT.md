@@ -81,6 +81,16 @@ cp nginx/nginx.conf.no-ssl nginx/nginx.conf
 Create or update `.env` file:
 
 ```bash
+# Copy the example file
+cp docker-compose.env.example .env
+
+# Edit the .env file with your production values
+nano .env
+```
+
+Required environment variables:
+
+```bash
 # Database
 POSTGRES_USER=synvoy_user
 POSTGRES_PASSWORD=your_secure_password_here
@@ -93,7 +103,18 @@ ENVIRONMENT=production
 
 # Frontend
 NEXT_PUBLIC_API_URL=https://www.synvoy.com/api
+
+# n8n Configuration (optional - defaults are provided)
+N8N_POSTGRES_USER=n8n_user
+N8N_POSTGRES_PASSWORD=n8n_secure_password_2024
+N8N_POSTGRES_DB=n8n
+N8N_BASIC_AUTH_ACTIVE=false
+N8N_HOST=127.0.0.1
+N8N_PROTOCOL=http
+N8N_TIMEZONE=UTC
 ```
+
+**Important**: Change all default passwords and generate a strong `SECRET_KEY` for production!
 
 ### 3. Start Services (Without SSL)
 

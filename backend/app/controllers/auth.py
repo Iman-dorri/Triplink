@@ -75,58 +75,72 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenWithUser)
 async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """Authenticate user and return access token."""
-    # Find user by email (case-insensitive email comparison)
-    user = db.query(User).filter(func.lower(User.email) == func.lower(user_credentials.email)).first()
-    if not user:
-        print(f"Login attempt failed: User with email {user_credentials.email} not found")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+    try:
+        # Find user by email (case-insensitive email comparison)
+        user = db.query(User).filter(func.lower(User.email) == func.lower(user_credentials.email)).first()
+        if not user:
+            print(f"Login attempt failed: User with email {user_credentials.email} not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password"
+            )
+        
+        # Verify password
+        if not verify_password(user_credentials.password, user.password_hash):
+            print(f"Login attempt failed: Incorrect password for user {user_credentials.email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password"
+            )
+        
+        # Check if user is active or pending verification (allow pending_verification for development)
+        if user.status not in ['active', 'pending_verification']:
+            print(f"Login attempt failed: User {user_credentials.email} is not active (status: {user.status})")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"User account is not active. Current status: {user.status}"
+            )
+        
+        print(f"Login successful for user {user_credentials.email}")
+        
+        # Generate access token
+        access_token = create_access_token(
+            data={"sub": str(user.id), "email": user.email}
         )
-    
-    # Verify password
-    if not verify_password(user_credentials.password, user.password_hash):
-        print(f"Login attempt failed: Incorrect password for user {user_credentials.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+        
+        # Convert user to response format
+        user_response = UserResponse(
+            id=str(user.id),  # Convert UUID to string
+            username=user.username,
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            phone=user.phone,
+            is_verified=user.is_verified,
+            status=user.status,
+            created_at=user.created_at,
+            updated_at=user.updated_at
         )
-    
-    # Check if user is active or pending verification (allow pending_verification for development)
-    if user.status not in ['active', 'pending_verification']:
-        print(f"Login attempt failed: User {user_credentials.email} is not active (status: {user.status})")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"User account is not active. Current status: {user.status}"
+        
+        return TokenWithUser(
+            access_token=access_token,
+            token_type="bearer",
+            expires_in=30 * 60,  # 30 minutes
+            user=user_response
         )
-    
-    print(f"Login successful for user {user_credentials.email}")
-    
-    # Generate access token
-    access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email}
-    )
-    
-    # Convert user to response format
-    user_response = UserResponse(
-        id=str(user.id),  # Convert UUID to string
-        username=user.username,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone=user.phone,
-        is_verified=user.is_verified,
-        status=user.status,
-        created_at=user.created_at,
-        updated_at=user.updated_at
-    )
-    
-    return TokenWithUser(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=30 * 60,  # 30 minutes
-        user=user_response
-    )
+    except HTTPException:
+        # Re-raise HTTP exceptions (401, 400, etc.)
+        raise
+    except Exception as e:
+        # Log unexpected errors
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Unexpected error during login: {str(e)}")
+        print(f"Traceback: {error_trace}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),

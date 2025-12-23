@@ -145,3 +145,14 @@ docker-compose rm -f backend frontend
 
 # Rebuild and start them
 docker-compose up -d --build backend frontend
+
+# Access n8n on Server from a local machine:
+# From your local machine, create SSH tunnel:
+ssh -L 5678:127.0.0.1:5678 your-user@your-server-ip
+
+# Then open http://localhost:5678 in your browser
+
+# Follow the SSL setup in DEPLOYMENT.md Step 4
+# Or use the nginx SSL setup scripts
+cd nginx
+./init-letsencrypt.sh
