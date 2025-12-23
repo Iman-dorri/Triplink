@@ -25,6 +25,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: synvoy-backend
+    env_file:
+      - .env
     environment:
       # Don't set DATABASE_URL here - let the Python code construct it with proper URL encoding
       # DATABASE_URL will be constructed from individual POSTGRES_* variables in the Python code
@@ -39,6 +41,13 @@ services:
       HOST: 0.0.0.0
       DEBUG: ${DEBUG:-True}
       ENVIRONMENT: ${ENVIRONMENT:-production}
+      # Email Configuration (Microsoft Graph API via MSAL)
+      MSAL_TENANT_ID: ${MSAL_TENANT_ID:-}
+      MSAL_CLIENT_ID: ${MSAL_CLIENT_ID:-}
+      MSAL_CLIENT_SECRET: ${MSAL_CLIENT_SECRET:-}
+      MSAL_SENDER_USER: ${MSAL_SENDER_USER:-iman.dorri@synvoy.com}
+      MSAL_FROM_ALIAS: ${MSAL_FROM_ALIAS:-contact@synvoy.com}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-contact@synvoy.com}
     # Ports exposed only for internal nginx access (remove if not needed for debugging)
     expose:
       - "8000"
