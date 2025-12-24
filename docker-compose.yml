@@ -149,9 +149,11 @@ services:
       N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-}
-      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_HOST: ${N8N_HOST:-www.synvoy.com}
       N8N_PORT: 5678
-      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
+      WEBHOOK_URL: ${WEBHOOK_URL:-https://www.synvoy.com/n8n}
+      N8N_PATH: /n8n
       GENERIC_TIMEZONE: ${N8N_TIMEZONE:-UTC}
     ports:
       - "127.0.0.1:5678:5678"
