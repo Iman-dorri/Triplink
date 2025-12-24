@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
+import Chatbot from '@/components/Chatbot'
 
 export default function HomePage() {
   const { user, isLoading } = useAuth()
@@ -22,6 +24,8 @@ export default function HomePage() {
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down')
   const [scrollY, setScrollY] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showChatbot, setShowChatbot] = useState(true) // Always show for now
+  const [mounted, setMounted] = useState(false)
   const lastScrollY = useRef(0)
   
   const statsRef = useRef<HTMLDivElement>(null)
@@ -31,6 +35,11 @@ export default function HomePage() {
   const ctaRef = useRef<HTMLDivElement>(null)
   const featureRefs = useRef<(HTMLDivElement | null)[]>([])
   const testimonialRefs = useRef<(HTMLDivElement | null)[]>([])
+
+  // Set mounted state for portal
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -222,6 +231,19 @@ export default function HomePage() {
     }
   }, [])
 
+  // Show chatbot after user scrolls a bit (better UX)
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowChatbot(true)
+      } else {
+        setShowChatbot(false)
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Scroll effect for navigation and scroll direction detection
   useEffect(() => {
     let scrollTimeout: NodeJS.Timeout
@@ -340,12 +362,18 @@ export default function HomePage() {
     }
   ]
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 animate-fadeIn">
-      {/* Navigation */}
-      <nav className={`bg-white/90 backdrop-blur-xl border-b border-white/20 sticky top-0 z-[100] shadow-lg shadow-blue-900/5 transition-all duration-300 w-full ${
-        scrolled ? 'bg-white/95 shadow-xl' : ''
-      }`}>
+  // Navigation content - extracted to render via portal
+  const navigationContent = (
+    <nav className={`bg-white/90 backdrop-blur-xl border-b border-white/20 fixed top-0 left-0 right-0 z-[99998] shadow-lg shadow-blue-900/5 transition-all duration-300 w-full ${
+      scrolled ? 'bg-white/95 shadow-xl' : ''
+    }`} style={{ 
+      position: 'fixed', 
+      top: 0, 
+      left: 0,
+      right: 0,
+      zIndex: 99998, 
+      width: '100%'
+    }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex items-center space-x-2 sm:space-x-3">
@@ -488,12 +516,19 @@ export default function HomePage() {
           </div>
         </div>
       </nav>
+  )
 
+  return (
+    <>
+    {/* Navigation - Rendered via portal to avoid PageTransition transform issues */}
+    {mounted && typeof document !== 'undefined' && createPortal(navigationContent, document.body)}
+
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 animate-fadeIn relative flex flex-col overflow-x-hidden pt-16 sm:pt-20">
       {/* Hero Section */}
       <section 
         ref={heroRef}
         id="hero"
-        className={`relative overflow-hidden pt-20 sm:pt-24 lg:pt-32 pb-12 sm:pb-16 lg:pb-20 transition-all duration-1000 ${
+        className={`relative overflow-hidden pt-4 sm:pt-8 lg:pt-12 pb-12 sm:pb-16 lg:pb-20 transition-all duration-1000 ${
           visibleSections.has('hero') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}
       >
@@ -788,7 +823,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-20">
+      <footer className="bg-gray-900 text-white py-20 w-full mb-0 pb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <div>
@@ -870,5 +905,9 @@ export default function HomePage() {
       </footer>
 
     </div>
+    
+    {/* Chatbot - Fixed at viewport, always visible */}
+    <Chatbot />
+    </>
   )
 }
