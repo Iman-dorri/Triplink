@@ -171,3 +171,4 @@ docker compose up -d
 - ✅ Hot module replacement in frontend
 - ✅ Database still in Docker (consistent with production)
 
+

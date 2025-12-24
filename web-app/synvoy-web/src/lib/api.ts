@@ -218,7 +218,9 @@ export const authAPI = {
         throw new Error(`Cannot connect to server. Please check:\n1. Backend is running on ${attemptedUrl}\n2. Backend is accessible from this network\n3. Firewall allows connections on port 8000`);
       }
       
-      throw new Error(error.response?.data?.detail || error.message || 'Login failed');
+      // Pass through the error detail (including "user_not_registered" for 404)
+      const errorDetail = error.response?.data?.detail || error.message || 'Login failed';
+      throw new Error(errorDetail);
     }
   },
 

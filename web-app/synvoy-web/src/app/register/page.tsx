@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -18,6 +19,14 @@ export default function RegisterPage() {
   const [formVisible, setFormVisible] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
+
+  // Pre-fill email from query parameter
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+  }, [searchParams]);
 
   // Animate form appearance after page transition starts
   useEffect(() => {

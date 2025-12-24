@@ -127,3 +127,4 @@ postgresql://synvoy_user:YOUR_PASSWORD@localhost:5433/synvoy
 
 Replace `YOUR_PASSWORD` with the actual password from your `.env` file.
 
+
