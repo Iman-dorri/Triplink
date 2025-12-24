@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     
     // Get n8n webhook URL from environment or use default
     // Try different possible webhook URL formats
-    const webhookId = '9e5a7186-a856-4ce7-ad7c-4eeeed6213ed'
+    const webhookId = process.env.N8N_WEBHOOK_ID || '9e5a7186-a856-4ce7-ad7c-4eeeed6213ed'
     
     // Determine n8n base URL
     // In Docker, use service name. In local dev, use localhost
