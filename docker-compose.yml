@@ -117,9 +117,9 @@ services:
       - synvoy-network
     restart: unless-stopped
 
-  # PostgreSQL Database for n8n
+  # PostgreSQL Database for n8n (with pgvector extension)
   n8n-postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: synvoy-n8n-postgres
     environment:
       POSTGRES_USER: ${N8N_POSTGRES_USER:-n8n_user}
@@ -127,6 +127,8 @@ services:
       POSTGRES_DB: ${N8N_POSTGRES_DB:-n8n}
     volumes:
       - synvoy_n8n_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${N8N_POSTGRES_USER:-n8n_user}"]
       interval: 10s

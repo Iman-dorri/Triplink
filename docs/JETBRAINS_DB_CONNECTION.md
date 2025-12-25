@@ -178,3 +178,4 @@ jdbc:postgresql://localhost:5433/synvoy?user=synvoy_user&password=YOUR_PASSWORD
 Replace `YOUR_PASSWORD` with the actual password from your `.env` file.
 
 
+

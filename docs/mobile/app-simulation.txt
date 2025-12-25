@@ -107,6 +107,9 @@ sudo docker compose down
 sudo docker stop synvoy-db synvoy-backend synvoy-frontend synvoy-nginx
 sudo docker rm synvoy-db synvoy-backend synvoy-frontend synvoy-nginx
 
+# Start a specific container:
+docker start synvoy-db
+
 After changes in frontend on server:
 cd ~/Synvoy
 
