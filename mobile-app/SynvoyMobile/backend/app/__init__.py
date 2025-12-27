@@ -1,1 +1,0 @@
-# Synvoy Backend Application 

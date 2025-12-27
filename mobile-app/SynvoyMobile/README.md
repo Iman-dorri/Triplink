@@ -1,224 +1,148 @@
-# Synvoy - Smart Travel & Shopping Platform
+# Synvoy Mobile App
 
-A comprehensive platform that combines travel planning with smart shopping features, helping users plan trips and find the best deals on travel-related items.
+React Native mobile application for the Synvoy Smart Travel & Shopping Platform.
 
-## 🚀 Project Overview
+## Features
 
-Synvoy is a multi-platform application that helps users:
-- **Plan trips** with detailed itineraries and destination management
-- **Set price alerts** for flights, hotels, and travel items
-- **Manage shopping lists** with price tracking and comparison
-- **Connect with friends** for group travel planning
-- **Track expenses** and stay within budget
+- ✈️ **Trip Management** - Create, view, and manage your travel plans
+- 💰 **Price Alerts** - Track prices for flights, hotels, and travel items
+- 🛍️ **Shopping List** - Manage your travel shopping list with price tracking
+- 👥 **Social Connections** - Connect with friends and plan trips together
+- 📱 **Cross-Platform** - Works on both Android and iOS
 
-## 🏗️ Architecture
+## Prerequisites
 
-The project consists of three main components:
+- Node.js 18+ 
+- npm or yarn
+- Android Studio (for Android development)
+- Xcode (for iOS development, macOS only)
+- React Native CLI
 
-### 1. **Backend API** (Python/FastAPI)
-- **Location**: `backend/`
-- **Technology**: FastAPI, SQLAlchemy, PostgreSQL
-- **Features**: RESTful API, JWT authentication, database management
+## Installation
 
-### 2. **Mobile App** (React Native)
-- **Location**: `mobile-app/`
-- **Technology**: React Native, TypeScript, Redux Toolkit
-- **Features**: Cross-platform mobile app for iOS and Android
-
-### 3. **Web App** (Next.js)
-- **Location**: `web-app/`
-- **Technology**: Next.js, TypeScript, Tailwind CSS
-- **Features**: Responsive web application with modern UI
-
-## 🛠️ Technology Stack
-
-### Backend
-- **FastAPI** - Modern Python web framework
-- **SQLAlchemy** - SQL toolkit and ORM
-- **PostgreSQL** - Primary database
-- **JWT** - Authentication and authorization
-- **Pydantic** - Data validation
-
-### Frontend
-- **React Native** - Mobile app development
-- **Next.js** - Web app framework
-- **TypeScript** - Type-safe JavaScript
-- **Redux Toolkit** - State management
-- **Tailwind CSS** - Utility-first CSS framework
-
-## 📁 Project Structure
-
-```
-Synvoy/
-├── backend/                 # Python FastAPI backend
-│   ├── app/
-│   │   ├── controllers/    # API route handlers
-│   │   ├── models/         # Database models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   ├── services/       # Business logic
-│   │   └── utils/          # Utility functions
-│   ├── tests/              # Test files
-│   ├── main.py             # Application entry point
-│   ├── requirements.txt    # Python dependencies
-│   └── README.md          # Backend documentation
-├── mobile-app/             # React Native mobile app
-│   ├── SynvoyMobile/     # React Native project
-│   └── README.md          # Mobile app documentation
-├── web-app/                # Next.js web application
-│   ├── synvoy-web/       # Next.js project
-│   └── README.md          # Web app documentation
-├── Document/               # Project documentation
-└── README.md              # This file
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Python 3.8+** (for backend)
-- **Node.js 18+** (for frontend)
-- **PostgreSQL 14+** (database)
-- **Android Studio** (for mobile development)
-
-### 1. Backend Setup
-
+1. Install dependencies:
 ```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment
-cp env.example .env
-# Edit .env with your database credentials
-
-# Run the application
-python main.py
+npm install
 ```
 
-### 2. Mobile App Setup
-
+2. For iOS (macOS only):
 ```bash
-cd mobile-app
+cd ios && pod install && cd ..
+```
 
-# Create React Native project
-npx react-native@latest init SynvoyMobile --template react-native-template-typescript
+3. Link native dependencies:
+```bash
+# For vector icons
+npx react-native-asset
+```
 
-# Install dependencies
-cd SynvoyMobile
-npm install @react-navigation/native @react-navigation/stack @reduxjs/toolkit react-redux
+## Running the App
 
-# Run on Android
+### Android
+```bash
 npm run android
 ```
 
-### 3. Web App Setup
-
+### iOS (macOS only)
 ```bash
-cd web-app
-
-# Create Next.js project
-npx create-next-app@latest synvoy-web --typescript --tailwind --eslint
-
-# Install dependencies
-cd synvoy-web
-npm install @reduxjs/toolkit react-redux axios
-
-# Run development server
-npm run dev
+npm run ios
 ```
 
-## 🔧 Development
-
-### Backend Development
-
-- **API Documentation**: Available at `http://localhost:8000/docs`
-- **Health Check**: `http://localhost:8000/health`
-- **Database**: PostgreSQL with SQLAlchemy ORM
-
-### Mobile Development
-
-- **Metro Bundler**: `npm start`
-- **Android**: `npm run android`
-- **iOS**: `npm run ios` (macOS only)
-
-### Web Development
-
-- **Development Server**: `http://localhost:3000`
-- **Hot Reload**: Enabled by default
-- **TypeScript**: Full type safety
-
-## 🧪 Testing
-
-### Backend Testing
+### Start Metro Bundler
 ```bash
-cd backend
-pytest
+npm start
 ```
 
-### Frontend Testing
-```bash
-# Mobile app
-cd mobile-app/SynvoyMobile
-npm test
+## Project Structure
 
-# Web app
-cd web-app/synvoy-web
-npm test
+```
+SynvoyMobile/
+├── src/
+│   ├── screens/          # Screen components
+│   │   ├── auth/        # Authentication screens
+│   │   └── main/        # Main app screens
+│   ├── components/      # Reusable UI components
+│   ├── navigation/      # Navigation configuration
+│   ├── store/           # Redux store and slices
+│   ├── services/        # API services
+│   ├── theme/           # Theme and styling
+│   └── utils/           # Utility functions
+├── App.tsx              # Main app component
+└── index.js             # Entry point
 ```
 
-## 📚 Documentation
+## Theme
 
-- **Backend API**: Check `backend/README.md`
-- **Mobile App**: Check `mobile-app/README.md`
-- **Web App**: Check `web-app/README.md`
-- **Project Setup**: Check `Document/Project_Setup_Guide.md`
+The app uses a theme matching the web application:
+- **Primary Colors**: Blue (#3b82f6) to Cyan (#06b6d4) gradients
+- **Accent Colors**: Teal, Emerald, Purple, Pink, Orange
+- **Typography**: Inter font family
+- **Design**: Modern, clean, professional with smooth animations
 
-## 🎯 Next Steps
+## API Configuration
 
-1. **Complete Backend API**
-   - Implement all CRUD operations
-   - Add comprehensive testing
-   - Set up database migrations
+Update the API base URL in `src/services/api.ts`:
 
-2. **Build Mobile App**
-   - Create authentication screens
-   - Implement trip management
-   - Add price alert features
+```typescript
+const API_BASE_URL = __DEV__ 
+  ? 'http://localhost:8000/api' 
+  : 'https://www.synvoy.com/api';
+```
 
-3. **Develop Web App**
-   - Build responsive dashboard
-   - Create trip planning interface
-   - Implement shopping management
+## Development
 
-4. **Integration & Testing**
-   - Connect all components
-   - End-to-end testing
-   - Performance optimization
+### Code Style
+- TypeScript for type safety
+- ESLint for code linting
+- Prettier for code formatting
 
-## 🤝 Contributing
+### State Management
+- Redux Toolkit for global state
+- AsyncStorage for local persistence
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+### Navigation
+- React Navigation for screen navigation
+- Bottom tabs for main app navigation
+- Stack navigation for auth flow
 
-## 📄 License
+## Building for Production
 
-This project is licensed under the MIT License.
+### Android
+```bash
+cd android
+./gradlew assembleRelease
+```
 
-## 🆘 Support
+### iOS
+```bash
+cd ios
+xcodebuild -workspace SynvoyMobile.xcworkspace -scheme SynvoyMobile -configuration Release
+```
 
-For questions and support:
-- Check the documentation in each component
-- Review the setup guides
-- Open an issue for bugs or feature requests
+## Troubleshooting
 
----
+### Metro bundler issues
+```bash
+npm start -- --reset-cache
+```
 
-**Happy coding! 🎉** 
+### Android build issues
+```bash
+cd android
+./gradlew clean
+```
+
+### iOS build issues
+```bash
+cd ios
+pod deintegrate
+pod install
+```
+
+## License
+
+MIT License
+
+
+
+

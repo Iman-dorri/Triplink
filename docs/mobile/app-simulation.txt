@@ -6,6 +6,13 @@ cd /media/necromancer/B6F8CF63F8CF208B/Iman/Programming/Machine\ Learning/TripLi
 Installing the app on Phone:
 npx react-native run-android
 
+necromancer@necromancer:~/PycharmProjects/Synvoy/mobile-app/SynvoyMobile$
+# Start Metro bundler (in one terminal)
+npm start
+
+# Run the app (in another terminal)
+npm run android
+
 
 Commands to start each component:
 1. Backend Server (FastAPI)
