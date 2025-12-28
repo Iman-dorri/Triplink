@@ -162,6 +162,19 @@ class ApiService {
     }
   }
 
+  async changePassword(currentPassword: string, newPassword: string) {
+    try {
+      const response = await this.client.post('/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('API change password error:', error);
+      throw error;
+    }
+  }
+
   // User endpoints
   async getProfile() {
     const response = await this.client.get('/auth/profile');

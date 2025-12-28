@@ -43,6 +43,8 @@ FROM_ALIAS = os.getenv("MSAL_FROM_ALIAS", "contact@synvoy.com")
 CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "contact@synvoy.com")
 # NO_REPLY_ALIAS: The alias email for verification emails (no-reply@synvoy.com)
 NO_REPLY_ALIAS = os.getenv("MSAL_NO_REPLY_ALIAS", "no-reply@synvoy.com")
+# NOTIFICATIONS_ALIAS: The alias email for notifications (notifications@synvoy.com)
+NOTIFICATIONS_ALIAS = os.getenv("MSAL_NOTIFICATIONS_ALIAS", "notifications@synvoy.com")
 
 # Debug: Print loaded values (without secrets)
 if not all([TENANT_ID, CLIENT_ID, CLIENT_SECRET, SENDER_USER]):
@@ -358,4 +360,142 @@ This is an automated email, please do not reply.
         return False
     except Exception as e:
         print(f"Error sending verification email: {e}")
+        return False
+
+def send_password_change_email(
+    email: str,
+    name: str
+) -> bool:
+    """
+    Send password change notification email to user using Microsoft Graph API
+    
+    Args:
+        email: User's email address
+        name: User's name
+    
+    Returns:
+        True if email sent successfully, False otherwise
+    """
+    # Check if MSAL is configured
+    if not all([TENANT_ID, CLIENT_ID, CLIENT_SECRET, SENDER_USER]):
+        print("Warning: MSAL not configured. Password change email not sent.")
+        print("Please set MSAL_TENANT_ID, MSAL_CLIENT_ID, MSAL_CLIENT_SECRET, and MSAL_SENDER_USER in .env file")
+        return False
+    
+    try:
+        # Get access token
+        access_token = get_access_token()
+        if not access_token:
+            print("Failed to get access token for password change email")
+            return False
+        
+        # Create email body
+        body_html = f"""<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">Password Changed</h1>
+    </div>
+    <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+        <p style="font-size: 16px; margin-bottom: 20px;">Hi {name},</p>
+        <p style="font-size: 16px; margin-bottom: 20px;">This is to confirm that your password has been successfully changed.</p>
+        
+        <div style="background: #f3f4f6; border-left: 4px solid #2563eb; padding: 20px; margin: 30px 0; border-radius: 4px;">
+            <p style="font-size: 14px; color: #1f2937; margin: 0;">
+                <strong>✅ Password Changed Successfully</strong><br>
+                Your account password was updated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')} UTC.
+            </p>
+        </div>
+        
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 30px 0; border-radius: 4px;">
+            <p style="font-size: 14px; color: #991b1b; margin: 0;">
+                <strong>⚠️ If this wasn't you:</strong><br>
+                If you did not change your password, please reset your password immediately or contact our support team right away. Your account may be at risk.
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://www.synvoy.com/contact" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">Contact Support</a>
+            <a href="https://www.synvoy.com/dashboard/profile" style="display: inline-block; background: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Profile</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6b7280; margin-top: 30px; margin-bottom: 0;">If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+    </div>
+    <div style="text-align: center; margin-top: 20px; padding: 20px; color: #9ca3af; font-size: 12px;">
+        <p style="margin: 0;">© {datetime.now().year} Synvoy. All rights reserved.</p>
+        <p style="margin: 5px 0 0 0;">This is an automated email, please do not reply.</p>
+    </div>
+</body>
+</html>"""
+        
+        body_text = f"""Password Changed
+
+Hi {name},
+
+This is to confirm that your password has been successfully changed.
+
+Password Changed Successfully
+Your account password was updated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')} UTC.
+
+⚠️ If this wasn't you:
+If you did not change your password, please reset your password immediately or contact our support team right away. Your account may be at risk.
+
+Contact Support: https://www.synvoy.com/contact
+View Profile: https://www.synvoy.com/dashboard/profile
+
+If you have any questions or concerns, please don't hesitate to contact our support team.
+
+© {datetime.now().year} Synvoy. All rights reserved.
+This is an automated email, please do not reply.
+"""
+        
+        # Prepare email message for Microsoft Graph API
+        email_message = {
+            "message": {
+                "subject": "Password Changed - Synvoy",
+                "body": {
+                    "contentType": "HTML",
+                    "content": body_html
+                },
+                "from": {
+                    "emailAddress": {
+                        "address": NOTIFICATIONS_ALIAS,
+                        "name": "Synvoy Notifications"
+                    }
+                },
+                "toRecipients": [
+                    {
+                        "emailAddress": {
+                            "address": email,
+                            "name": name
+                        }
+                    }
+                ]
+            },
+            "saveToSentItems": "true"
+        }
+        
+        # Send email via Microsoft Graph API
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        
+        # Use SENDER_USER (actual mailbox) for the API endpoint
+        url = f"{GRAPH_API_ENDPOINT}/users/{SENDER_USER}/sendMail"
+        
+        response = requests.post(url, json=email_message, headers=headers)
+        
+        if response.status_code == 202:
+            print(f"Password change email sent successfully to {email}")
+            return True
+        else:
+            print(f"Failed to send password change email. Status: {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Request error sending password change email: {e}")
+        return False
+    except Exception as e:
+        print(f"Error sending password change email: {e}")
         return False

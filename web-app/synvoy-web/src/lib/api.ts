@@ -278,6 +278,19 @@ export const authAPI = {
       throw new Error(error.response?.data?.detail || 'Failed to get verification status');
     }
   },
+
+  // Change password
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    try {
+      const response = await api.post('/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to change password');
+    }
+  },
 };
 
 // Connection API functions

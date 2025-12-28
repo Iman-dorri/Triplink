@@ -7,10 +7,11 @@ from app.models.user import User
 from app.models.verification_token import VerificationToken
 from app.schemas.auth import (
     UserCreate, UserLogin, UserResponse, TokenWithUser,
-    VerifyEmailRequest, ResendVerificationRequest, VerificationStatusResponse
+    VerifyEmailRequest, ResendVerificationRequest, VerificationStatusResponse,
+    ChangePasswordRequest
 )
 from app.utils.auth import get_password_hash, verify_password, create_access_token, verify_token
-from app.utils.email import send_verification_email
+from app.utils.email import send_verification_email, send_password_change_email
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 import os
@@ -460,6 +461,65 @@ async def get_verification_status(
         raise
     except Exception as e:
         print(f"Error getting verification status: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@router.post("/change-password")
+async def change_password(
+    password_data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Change user password.
+    Requires current password verification and sends email notification.
+    """
+    try:
+        # Verify current password
+        if not verify_password(password_data.current_password, current_user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Current password is incorrect"
+            )
+        
+        # Check if new password is different from current password
+        if verify_password(password_data.new_password, current_user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be different from current password"
+            )
+        
+        # Hash new password
+        new_password_hash = get_password_hash(password_data.new_password)
+        
+        # Update password
+        current_user.password_hash = new_password_hash
+        current_user.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(current_user)
+        
+        # Send email notification
+        user_name = f"{current_user.first_name} {current_user.last_name}".strip() or current_user.username
+        email_sent = send_password_change_email(
+            email=current_user.email,
+            name=user_name
+        )
+        
+        if not email_sent:
+            # Log warning but don't fail the request
+            print(f"Warning: Failed to send password change email to {current_user.email}")
+        
+        return {
+            "success": True,
+            "message": "Password changed successfully. A confirmation email has been sent."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error changing password: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"

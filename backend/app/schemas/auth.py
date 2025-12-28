@@ -57,3 +57,7 @@ class VerificationStatusResponse(BaseModel):
     account_deletion_at: Optional[datetime] = None
     time_remaining_seconds: Optional[int] = None
     deletion_time_remaining_seconds: Optional[int] = None
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, description="Current password")
+    new_password: str = Field(..., min_length=6, max_length=72, description="New password (min 6 characters)")
