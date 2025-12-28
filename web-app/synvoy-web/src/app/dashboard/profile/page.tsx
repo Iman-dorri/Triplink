@@ -62,7 +62,7 @@ export default function ProfilePage() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 lg:py-12">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
-            My Profile
+            Profile Settings
           </h1>
           <p className="text-base sm:text-lg lg:text-xl text-gray-600">View and manage your account information</p>
         </div>

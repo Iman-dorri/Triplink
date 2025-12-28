@@ -245,7 +245,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/profile" className="h-full">
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500 h-full flex flex-col">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">👤</div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">My Profile</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">Profile Settings</h3>
               <p className="text-sm sm:text-base text-gray-600 flex-grow">View and manage your account information</p>
             </div>
           </Link>

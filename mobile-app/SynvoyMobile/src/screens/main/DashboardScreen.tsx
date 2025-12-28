@@ -243,7 +243,7 @@ const DashboardScreen = ({ navigation }: any) => {
           <View style={styles.featureIconContainer}>
             <Icon name="person" size={32} color={colors.primary[600]} />
           </View>
-          <Text style={styles.featureTitle}>My Profile</Text>
+          <Text style={styles.featureTitle}>Profile Settings</Text>
           <Text style={styles.featureDescription}>View and manage your account information</Text>
         </TouchableOpacity>
       </View>
