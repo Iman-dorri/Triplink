@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function SignInPage() {
-  const [email, setEmail] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isUserNotRegistered, setIsUserNotRegistered] = useState(false);
@@ -34,7 +34,7 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(usernameOrEmail, password);
       // Redirect will happen automatically via AuthContext
       router.push('/dashboard');
     } catch (err: any) {
@@ -99,7 +99,7 @@ export default function SignInPage() {
                       <p className="text-sm font-semibold mb-2">Account Not Found</p>
                       <p className="text-sm mb-3">This email address is not registered. Would you like to create an account?</p>
                       <Link
-                        href={`/register${email ? `?email=${encodeURIComponent(email)}` : ''}`}
+                        href={`/register${usernameOrEmail ? `?email=${encodeURIComponent(usernameOrEmail)}` : ''}`}
                         className="inline-block text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-200"
                       >
                         Create Account
@@ -118,25 +118,25 @@ export default function SignInPage() {
                 </div>
               )}
 
-              {/* Email Field */}
+              {/* Email or Username Field */}
               <div>
-                <label htmlFor="email" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
-                  Email Address
+                <label htmlFor="usernameOrEmail" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
+                  Email or Username
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
                     <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="usernameOrEmail"
+                    type="text"
+                    value={usernameOrEmail}
+                    onChange={(e) => setUsernameOrEmail(e.target.value)}
                     required
                     className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50 focus:bg-white"
-                    placeholder="you@example.com"
+                    placeholder="Enter your email or username"
                   />
                 </div>
               </div>

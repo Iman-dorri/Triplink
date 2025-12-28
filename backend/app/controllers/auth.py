@@ -74,12 +74,31 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenWithUser)
 async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    """Authenticate user and return access token."""
+    """Authenticate user and return access token. Accepts either email or username."""
     try:
-        # Find user by email (case-insensitive email comparison)
-        user = db.query(User).filter(func.lower(User.email) == func.lower(user_credentials.email)).first()
+        # Normalize input (lowercase for comparison)
+        login_input = user_credentials.username_or_email.lower().strip()
+        
+        # Try to find user by email first, then by username
+        # Check if input contains @ (likely an email)
+        if '@' in login_input:
+            # Find user by email (case-insensitive email comparison)
+            user = db.query(User).filter(func.lower(User.email) == login_input).first()
+        else:
+            # Find user by username (case-insensitive username comparison)
+            user = db.query(User).filter(func.lower(User.username) == login_input).first()
+        
+        # If not found, try the other method as fallback
         if not user:
-            print(f"Login attempt failed: User with email {user_credentials.email} not found")
+            if '@' in login_input:
+                # Already tried email, try username
+                user = db.query(User).filter(func.lower(User.username) == login_input).first()
+            else:
+                # Already tried username, try email
+                user = db.query(User).filter(func.lower(User.email) == login_input).first()
+        
+        if not user:
+            print(f"Login attempt failed: User with username/email '{user_credentials.username_or_email}' not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="user_not_registered"
@@ -87,21 +106,21 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         
         # Verify password
         if not verify_password(user_credentials.password, user.password_hash):
-            print(f"Login attempt failed: Incorrect password for user {user_credentials.email}")
+            print(f"Login attempt failed: Incorrect password for user '{user_credentials.username_or_email}'")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+                detail="Incorrect username/email or password"
             )
         
         # Check if user is active or pending verification (allow pending_verification for development)
         if user.status not in ['active', 'pending_verification']:
-            print(f"Login attempt failed: User {user_credentials.email} is not active (status: {user.status})")
+            print(f"Login attempt failed: User '{user_credentials.username_or_email}' is not active (status: {user.status})")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"User account is not active. Current status: {user.status}"
             )
         
-        print(f"Login successful for user {user_credentials.email}")
+        print(f"Login successful for user '{user_credentials.username_or_email}' (ID: {user.id})")
         
         # Generate access token
         access_token = create_access_token(

@@ -69,10 +69,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (usernameOrEmail: string, password: string) => {
     try {
       setIsLoading(true);
-      const response = await authAPI.login(email, password);
+      const response = await authAPI.login(usernameOrEmail, password);
       
       let token, user;
       

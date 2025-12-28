@@ -21,17 +21,17 @@ import LinearGradient from 'react-native-linear-gradient';
 const LoginScreen = ({ navigation }: any) => {
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
-  const [email, setEmail] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!usernameOrEmail || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
-      await dispatch(login({ email, password })).unwrap();
+      await dispatch(login({ usernameOrEmail, password })).unwrap();
     } catch (err: any) {
       const errorMessage = typeof err === 'string' ? err : err?.message || 'Invalid credentials';
       Alert.alert('Login Failed', errorMessage);
@@ -69,15 +69,14 @@ const LoginScreen = ({ navigation }: any) => {
             <Text style={styles.formSubtitle}>Sign in to continue</Text>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Email or Username</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your email"
+                  placeholder="Enter your email or username"
                   placeholderTextColor={colors.gray[400]}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
+                  value={usernameOrEmail}
+                  onChangeText={setUsernameOrEmail}
                   autoCapitalize="none"
                   autoCorrect={false}
                 />

@@ -10,7 +10,7 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
-  const [email, setEmail] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isUserNotRegistered, setIsUserNotRegistered] = useState(false);
@@ -77,7 +77,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(usernameOrEmail, password);
       onClose();
       // Redirect will happen automatically via AuthContext
     } catch (err: any) {
@@ -182,7 +182,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                         type="button"
                         onClick={() => {
                           setIsUserNotRegistered(false);
-                          onSwitchToRegister(email);
+                          onSwitchToRegister(usernameOrEmail);
                         }}
                         className="text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-200"
                       >
@@ -202,25 +202,25 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
             </div>
           )}
 
-              {/* Email Field */}
+              {/* Email or Username Field */}
           <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email Address
+                <label htmlFor="usernameOrEmail" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email or Username
             </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="usernameOrEmail"
+              type="text"
+              value={usernameOrEmail}
+              onChange={(e) => setUsernameOrEmail(e.target.value)}
               required
                     className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50 focus:bg-white"
-              placeholder="you@example.com"
+              placeholder="Enter your email or username"
             />
                 </div>
           </div>
@@ -324,7 +324,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
             Don't have an account?{' '}
             <button
                   type="button"
-              onClick={() => onSwitchToRegister(email)}
+              onClick={() => onSwitchToRegister(usernameOrEmail)}
                   className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-300"
             >
                   Create one now

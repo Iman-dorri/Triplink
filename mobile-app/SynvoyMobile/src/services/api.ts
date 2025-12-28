@@ -100,9 +100,9 @@ class ApiService {
   }
 
   // Auth endpoints
-  async login(email: string, password: string) {
+  async login(usernameOrEmail: string, password: string) {
     try {
-      const response = await this.client.post('/auth/login', { email, password });
+      const response = await this.client.post('/auth/login', { username_or_email: usernameOrEmail, password });
       if (response.data.access_token) {
         await this.setToken(response.data.access_token);
       }

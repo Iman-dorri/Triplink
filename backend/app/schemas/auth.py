@@ -14,7 +14,7 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=6, max_length=72)  # Bcrypt limit is 72 bytes
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    username_or_email: str = Field(..., min_length=1, description="Username or email address")
     password: str
 
 class UserResponse(UserBase):

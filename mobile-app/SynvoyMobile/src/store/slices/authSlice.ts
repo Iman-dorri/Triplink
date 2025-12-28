@@ -34,9 +34,9 @@ const initialState: AuthState = {
 // Async thunks
 export const login = createAsyncThunk(
   'auth/login',
-  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+  async ({ usernameOrEmail, password }: { usernameOrEmail: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await apiService.login(email, password);
+      const response = await apiService.login(usernameOrEmail, password);
       const user = await apiService.getProfile();
       await AsyncStorage.setItem('user', JSON.stringify(user));
       return { token: response.access_token, user };

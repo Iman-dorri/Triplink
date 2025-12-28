@@ -203,10 +203,10 @@ export const authAPI = {
   },
 
   // Login user
-  login: async (email: string, password: string) => {
+  login: async (usernameOrEmail: string, password: string) => {
     try {
       const response = await api.post('/auth/login', {
-        email,
+        username_or_email: usernameOrEmail,
         password,
       });
       return response.data;
