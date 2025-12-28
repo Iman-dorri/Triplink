@@ -155,10 +155,20 @@ api.interceptors.response.use(
     }
     
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      // Token expired, clear storage and redirect to login
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
-      window.location.href = '/';
+      // Only redirect if:
+      // 1. User has a token (was logged in) - token expired
+      // 2. Request is NOT to auth endpoints (login/register) - those should show errors
+      const hasToken = localStorage.getItem('auth_token');
+      const requestUrl = error.config?.url || '';
+      const isAuthEndpoint = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
+      
+      if (hasToken && !isAuthEndpoint) {
+        // Token expired, clear storage and redirect to login
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        window.location.href = '/';
+      }
+      // For auth endpoints (login/register), let the form handle the error
     }
     return Promise.reject(error);
   }
