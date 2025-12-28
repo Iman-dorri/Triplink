@@ -431,12 +431,20 @@ async def get_conversations(
             Message.trip_id.is_(None)  # Only 1-on-1 messages
         ).count()
         
+        # Anonymize deleted users
+        if other_user.status == 'pending_deletion':
+            user_name = "Deleted User"
+            user_avatar = None
+        else:
+            user_name = f"{other_user.first_name} {other_user.last_name}"
+            user_avatar = other_user.avatar_url
+        
         conversations.append(ChatConversation(
             user_id=str(other_user.id),
             trip_id=None,
-            user_name=f"{other_user.first_name} {other_user.last_name}",
+            user_name=user_name,
             trip_title=None,
-            user_avatar=other_user.avatar_url,
+            user_avatar=user_avatar,
             last_message=MessageResponse(
                 id=str(last_message.id),
                 sender_id=str(last_message.sender_id),
