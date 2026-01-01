@@ -124,6 +124,7 @@ class ApiService {
     first_name: string;
     last_name: string;
     phone?: string;
+    tester_code?: string;
   }) {
     const response = await this.client.post('/auth/register', data);
     if (response.data.access_token) {
@@ -369,6 +370,28 @@ class ApiService {
     return response.data;
   }
 
+  async clearChat(userId?: string, tripId?: string) {
+    const response = await this.client.post('/messages/clear-chat', {
+      user_id: userId,
+      trip_id: tripId,
+    });
+    return response.data;
+  }
+
+  async deleteMessageForEveryone(messageId: string) {
+    const response = await this.client.post('/messages/delete-for-everyone', {
+      message_id: messageId,
+    });
+    return response.data;
+  }
+
+  async leaveGroup(tripId: string) {
+    const response = await this.client.post('/messages/leave-group', {
+      trip_id: tripId,
+    });
+    return response.data;
+  }
+
   // Notification endpoints
   async getNotifications() {
     const response = await this.client.get('/notifications');
@@ -409,6 +432,7 @@ export const apiService = {
     first_name: string;
     last_name: string;
     phone?: string;
+    tester_code?: string;
   }) => getApiService().register(data),
   getProfile: () => getApiService().getProfile(),
   updateProfile: (data: any) => getApiService().updateProfile(data),
@@ -439,6 +463,9 @@ export const apiService = {
   getConversation: (userId: string, limit?: number, offset?: number) => getApiService().getConversation(userId, limit, offset),
   getTripMessages: (tripId: string, limit?: number, offset?: number) => getApiService().getTripMessages(tripId, limit, offset),
   sendMessage: (content: string, receiverId?: string, tripId?: string) => getApiService().sendMessage(content, receiverId, tripId),
+  clearChat: (userId?: string, tripId?: string) => getApiService().clearChat(userId, tripId),
+  deleteMessageForEveryone: (messageId: string) => getApiService().deleteMessageForEveryone(messageId),
+  leaveGroup: (tripId: string) => getApiService().leaveGroup(tripId),
   getNotifications: () => getApiService().getNotifications(),
   markNotificationRead: (id: string) => getApiService().markNotificationRead(id),
 };

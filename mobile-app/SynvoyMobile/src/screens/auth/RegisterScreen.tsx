@@ -25,45 +25,75 @@ const RegisterScreen = ({ navigation }: any) => {
     username: '',
     email: '',
     password: '',
+    confirmPassword: '',
     firstName: '',
     lastName: '',
     phone: '',
+    testerCode: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showTesterCode, setShowTesterCode] = useState(false);
+  const [localError, setLocalError] = useState('');
 
   const handleRegister = async () => {
-    if (!formData.username || !formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    setLocalError('');
+    
+    // Validate required fields
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword || !formData.firstName || !formData.lastName) {
+      setLocalError('Please fill in all required fields');
+      return;
+    }
+
+    // Validate password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      setLocalError('Passwords do not match. Please try again.');
+      return;
+    }
+
+    // Validate tester code
+    if (!formData.testerCode.trim()) {
+      setLocalError('Tester code is required. The application is currently in development.');
       return;
     }
 
     // Validate username: 3-50 characters, alphanumeric and underscore only
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     if (formData.username.length < 3 || formData.username.length > 50) {
-      Alert.alert('Error', 'Username must be between 3 and 50 characters');
+      setLocalError('Username must be between 3 and 50 characters');
       return;
     }
     if (!usernameRegex.test(formData.username)) {
-      Alert.alert('Error', 'Username can only contain letters, numbers, and underscores');
+      setLocalError('Username can only contain letters, numbers, and underscores');
       return;
     }
 
     // Validate password: minimum 6 characters
     if (formData.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      setLocalError('Password must be at least 6 characters');
       return;
     }
 
     try {
-      const result = await dispatch(register(formData)).unwrap();
+      const result = await dispatch(register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone || undefined,
+        testerCode: formData.testerCode.trim(),
+      })).unwrap();
       // After registration, user is not verified, redirect to verification screen
       if (result?.user && !result.user.is_verified) {
         navigation.navigate('VerifyEmail' as never, { email: formData.email } as never);
       }
     } catch (err: any) {
-      Alert.alert('Registration Failed', err || 'Please try again');
+      setLocalError(err || 'Registration failed. Please try again.');
     }
   };
+
+  const displayError = localError || error;
 
   return (
     <KeyboardAvoidingView
@@ -73,148 +103,281 @@ const RegisterScreen = ({ navigation }: any) => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
           {/* Logo and Title */}
           <View style={styles.logoContainer}>
             <LinearGradient
-              colors={[colors.primary[600], colors.cyan[500]]}
+              colors={[colors.teal[600], colors.emerald[600], colors.green[600]]}
               style={styles.logo}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
               <Icon name="public" size={48} color={colors.text.white} />
             </LinearGradient>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join Synvoy today</Text>
+            <Text style={styles.title}>Join Synvoy</Text>
+            <Text style={styles.subtitle}>Start your travel journey today</Text>
           </View>
+
+          {/* Development Notice */}
+          <View style={styles.noticeContainer}>
+            <Icon name="info" size={20} color={colors.blue[600]} style={styles.noticeIcon} />
+            <View style={styles.noticeContent}>
+              <Text style={styles.noticeTitle}>🚧 Application in Development</Text>
+              <Text style={styles.noticeText}>
+                The application is currently in development. Registration is limited to testers only. If you don't have a tester code, please contact our support team via the Contact page to request one.
+              </Text>
+            </View>
+          </View>
+
+          {/* Error Message */}
+          {displayError && (
+            <View style={styles.errorContainer}>
+              <Icon name="error" size={20} color={colors.error} style={styles.errorIcon} />
+              <Text style={styles.errorText}>{displayError}</Text>
+            </View>
+          )}
 
           {/* Register Form */}
           <View style={styles.form}>
+            {/* Name Fields - Side by Side */}
             <View style={styles.row}>
               <View style={[styles.inputContainer, { flex: 1, marginRight: theme.spacing.sm }]}>
-                <Text style={styles.label}>First Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="John"
-                  placeholderTextColor={colors.gray[400]}
-                  value={formData.firstName}
-                  onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                  autoCapitalize="words"
-                />
+                <Text style={styles.label}>
+                  First Name <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.inputWrapper}>
+                  <Icon name="person" size={20} color={colors.gray[400]} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="John"
+                    placeholderTextColor={colors.gray[400]}
+                    value={formData.firstName}
+                    onChangeText={(text) => setFormData({ ...formData, firstName: text })}
+                    autoCapitalize="words"
+                  />
+                </View>
               </View>
               <View style={[styles.inputContainer, { flex: 1 }]}>
-                <Text style={styles.label}>Last Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Doe"
-                  placeholderTextColor={colors.gray[400]}
-                  value={formData.lastName}
-                  onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                  autoCapitalize="words"
-                />
+                <Text style={styles.label}>
+                  Last Name <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.inputWrapper}>
+                  <Icon name="person" size={20} color={colors.gray[400]} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Doe"
+                    placeholderTextColor={colors.gray[400]}
+                    value={formData.lastName}
+                    onChangeText={(text) => setFormData({ ...formData, lastName: text })}
+                    autoCapitalize="words"
+                  />
+                </View>
               </View>
             </View>
 
+            {/* Username Field */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={styles.label}>
+                Username <Text style={styles.required}>*</Text>
+              </Text>
               <View style={styles.inputWrapper}>
+                <Icon name="person" size={20} color={colors.gray[400]} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                placeholder="johndoe"
-                placeholderTextColor={colors.gray[400]}
-                value={formData.username}
-                onChangeText={(text) => {
-                  // Only allow alphanumeric and underscore, convert to lowercase
-                  const value = text.toLowerCase().replace(/[^a-z0-9_]/g, '');
-                  setFormData({ ...formData, username: value });
-                }}
-                autoCapitalize="none"
-                autoCorrect={false}
-                maxLength={50}
-              />
+                  placeholder="johndoe"
+                  placeholderTextColor={colors.gray[400]}
+                  value={formData.username}
+                  onChangeText={(text) => {
+                    // Only allow alphanumeric and underscore, convert to lowercase
+                    const value = text.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                    setFormData({ ...formData, username: value });
+                  }}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  maxLength={50}
+                />
+              </View>
               <Text style={styles.helperText}>
                 3-50 characters, letters, numbers, and underscores only
               </Text>
             </View>
 
+            {/* Email Field */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="john@example.com"
-                placeholderTextColor={colors.gray[400]}
-                value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Phone (Optional)</Text>
+              <Text style={styles.label}>
+                Email Address <Text style={styles.required}>*</Text>
+              </Text>
               <View style={styles.inputWrapper}>
+                <Icon name="email" size={20} color={colors.gray[400]} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                placeholder="+1234567890"
-                placeholderTextColor={colors.gray[400]}
-                value={formData.phone}
-                onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                keyboardType="phone-pad"
+                  placeholder="you@example.com"
+                  placeholderTextColor={colors.gray[400]}
+                  value={formData.email}
+                  onChangeText={(text) => setFormData({ ...formData, email: text })}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
               </View>
             </View>
 
+            {/* Phone Field (Optional) */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>
+                Phone Number <Text style={styles.optional}>(Optional)</Text>
+              </Text>
+              <View style={styles.inputWrapper}>
+                <Icon name="phone" size={20} color={colors.gray[400]} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="+1 (555) 123-4567"
+                  placeholderTextColor={colors.gray[400]}
+                  value={formData.phone}
+                  onChangeText={(text) => setFormData({ ...formData, phone: text })}
+                  keyboardType="phone-pad"
+                />
+              </View>
+            </View>
+
+            {/* Password Field */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>
+                Password <Text style={styles.required}>*</Text>
+              </Text>
               <View style={[styles.inputWrapper, styles.passwordContainer]}>
+                <Icon name="lock" size={20} color={colors.gray[400]} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, styles.passwordInput]}
-                  placeholder="Create a password"
+                  placeholder="Create a strong password"
                   placeholderTextColor={colors.gray[400]}
                   value={formData.password}
                   onChangeText={(text) => setFormData({ ...formData, password: text })}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  minLength={6}
                 />
                 <TouchableOpacity
                   style={styles.passwordToggle}
                   onPress={() => setShowPassword(!showPassword)}
                 >
-                  <Text style={styles.passwordToggleText}>
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </Text>
+                  <Icon 
+                    name={showPassword ? 'visibility-off' : 'visibility'} 
+                    size={24} 
+                    color={colors.gray[400]} 
+                  />
                 </TouchableOpacity>
               </View>
               <Text style={styles.helperText}>Minimum 6 characters</Text>
             </View>
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            {/* Confirm Password Field */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>
+                Confirm Password <Text style={styles.required}>*</Text>
+              </Text>
+              <View style={[styles.inputWrapper, styles.passwordContainer]}>
+                <Icon name="lock" size={20} color={colors.gray[400]} style={styles.inputIcon} />
+                <TextInput
+                  style={[
+                    styles.input, 
+                    styles.passwordInput,
+                    formData.confirmPassword && formData.password !== formData.confirmPassword && styles.inputError
+                  ]}
+                  placeholder="Confirm your password"
+                  placeholderTextColor={colors.gray[400]}
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                  secureTextEntry={!showConfirmPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.passwordToggle}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Icon 
+                    name={showConfirmPassword ? 'visibility-off' : 'visibility'} 
+                    size={24} 
+                    color={colors.gray[400]} 
+                  />
+                </TouchableOpacity>
+              </View>
+              {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                <Text style={styles.errorHelperText}>Passwords do not match</Text>
+              )}
+            </View>
 
+            {/* Tester Code Field */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>
+                Tester Code <Text style={styles.required}>*</Text>
+              </Text>
+              <View style={[styles.inputWrapper, styles.passwordContainer]}>
+                <Icon name="lock" size={20} color={colors.gray[400]} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  placeholder="Enter tester code"
+                  placeholderTextColor={colors.gray[400]}
+                  value={formData.testerCode}
+                  onChangeText={(text) => setFormData({ ...formData, testerCode: text })}
+                  secureTextEntry={!showTesterCode}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.passwordToggle}
+                  onPress={() => setShowTesterCode(!showTesterCode)}
+                >
+                  <Icon 
+                    name={showTesterCode ? 'visibility-off' : 'visibility'} 
+                    size={24} 
+                    color={colors.gray[400]} 
+                  />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.helperText}>
+                Don't have a tester code? Contact our support team via the Contact page.
+              </Text>
+            </View>
+
+            {/* Submit Button */}
             <TouchableOpacity
-              style={styles.registerButton}
+              style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
               onPress={handleRegister}
               disabled={isLoading}
             >
               <LinearGradient
-                colors={[colors.primary[600], colors.cyan[500]]}
+                colors={[colors.teal[600], colors.emerald[600], colors.green[600]]}
                 style={styles.gradientButton}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.registerButtonText}>
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
-                </Text>
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={colors.text.white} />
+                    <Text style={styles.registerButtonText}>Creating account...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <Text style={styles.registerButtonText}>Create Account</Text>
+                    <Icon name="arrow-forward" size={20} color={colors.text.white} />
+                  </View>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Already a member?</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Sign in link */}
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.loginLink}>Sign In</Text>
+                <Text style={styles.loginLink}>Sign in instead</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -252,7 +415,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   title: {
-    fontSize: theme.fontSize['3xl'],
+    fontSize: theme.fontSize['2xl'],
     fontWeight: theme.fontWeight.bold,
     color: colors.text.primary,
     marginBottom: theme.spacing.xs,
@@ -260,6 +423,52 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: theme.fontSize.md,
     color: colors.text.secondary,
+  },
+  noticeContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.blue[50],
+    borderLeftWidth: 4,
+    borderLeftColor: colors.blue[500],
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.md,
+  },
+  noticeIcon: {
+    marginRight: theme.spacing.sm,
+    marginTop: 2,
+  },
+  noticeContent: {
+    flex: 1,
+  },
+  noticeTitle: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: colors.blue[800],
+    marginBottom: theme.spacing.xs,
+  },
+  noticeText: {
+    fontSize: theme.fontSize.sm,
+    color: colors.blue[800],
+    lineHeight: 20,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.red[50],
+    borderLeftWidth: 4,
+    borderLeftColor: colors.error,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.md,
+  },
+  errorIcon: {
+    marginRight: theme.spacing.sm,
+    marginTop: 2,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: theme.fontSize.sm,
+    color: colors.error,
+    lineHeight: 20,
   },
   form: {
     width: '100%',
@@ -272,27 +481,65 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
+    fontWeight: theme.fontWeight.semibold,
     color: colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
-  input: {
-    backgroundColor: colors.background.default,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    fontSize: theme.fontSize.md,
-    color: colors.text.primary,
-    borderWidth: 1.5,
-    borderColor: colors.gray[200],
-    minHeight: 52,
+  required: {
+    color: colors.error,
+  },
+  optional: {
+    color: colors.gray[400],
+    fontWeight: theme.fontWeight.normal,
   },
   inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.default,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.gray[200],
+    minHeight: 52,
     ...theme.shadows.sm,
   },
-  errorText: {
+  inputIcon: {
+    marginLeft: theme.spacing.md,
+    marginRight: theme.spacing.sm,
+  },
+  input: {
+    flex: 1,
+    fontSize: theme.fontSize.md,
+    color: colors.text.primary,
+    padding: theme.spacing.md,
+    paddingLeft: 0,
+  },
+  inputError: {
+    borderColor: colors.red[300],
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  passwordToggle: {
+    position: 'absolute',
+    right: theme.spacing.md,
+    padding: theme.spacing.xs,
+  },
+  helperText: {
+    fontSize: theme.fontSize.xs,
+    color: colors.text.tertiary,
+    marginTop: theme.spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  errorHelperText: {
+    fontSize: theme.fontSize.xs,
     color: colors.error,
-    fontSize: theme.fontSize.sm,
-    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   registerButton: {
     borderRadius: theme.borderRadius.xl,
@@ -310,48 +557,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 56,
   },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
   registerButtonText: {
     color: colors.text.white,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.semibold,
   },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: theme.spacing.xl,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.gray[200],
+  },
+  dividerText: {
+    paddingHorizontal: theme.spacing.md,
+    fontSize: theme.fontSize.sm,
+    color: colors.text.secondary,
+  },
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: theme.spacing.xl,
+    marginTop: theme.spacing.md,
   },
   loginText: {
     color: colors.text.secondary,
     fontSize: theme.fontSize.md,
   },
   loginLink: {
-    color: colors.primary[600],
+    color: colors.teal[600],
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
-  },
-  helperText: {
-    fontSize: theme.fontSize.xs,
-    color: colors.text.tertiary,
-    marginTop: theme.spacing.xs,
-  },
-  passwordContainer: {
-    position: 'relative',
-  },
-  passwordInput: {
-    paddingRight: 50,
-  },
-  passwordToggle: {
-    position: 'absolute',
-    right: theme.spacing.md,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  passwordToggleText: {
-    fontSize: 20,
   },
 });
 
 export default RegisterScreen;
-

@@ -439,6 +439,43 @@ export const messageAPI = {
       throw new Error(error.response?.data?.detail || 'Failed to get conversations');
     }
   },
+
+  // Clear chat for me
+  clearChat: async (userId?: string, tripId?: string) => {
+    try {
+      const response = await api.post('/messages/clear-chat', {
+        user_id: userId,
+        trip_id: tripId,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to clear chat');
+    }
+  },
+
+  // Delete message for everyone
+  deleteMessageForEveryone: async (messageId: string) => {
+    try {
+      const response = await api.post('/messages/delete-for-everyone', {
+        message_id: messageId,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to delete message');
+    }
+  },
+
+  // Leave group
+  leaveGroup: async (tripId: string) => {
+    try {
+      const response = await api.post('/messages/leave-group', {
+        trip_id: tripId,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to leave group');
+    }
+  },
 };
 
 // Storage utilities

@@ -57,6 +57,9 @@ export default function TripChatPage() {
   const [error, setError] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true);
@@ -195,12 +198,14 @@ export default function TripChatPage() {
         if (prevMessages.length !== fetchedMessages.length) {
           return fetchedMessages;
         }
-        // Deep comparison: check if any message content changed
+        // Deep comparison: check if any message content or deletion status changed
         const hasChanges = fetchedMessages.some((msg: any, idx: number) => {
           const prevMsg = prevMessages[idx];
           if (!prevMsg) return true;
-          // Compare IDs and content
-          if (prevMsg.id !== msg.id || prevMsg.content !== msg.content) {
+          // Compare IDs, content, and deletion status
+          if (prevMsg.id !== msg.id || 
+              prevMsg.content !== msg.content ||
+              prevMsg.deleted_for_everyone_at !== msg.deleted_for_everyone_at) {
             return true;
           }
           return false;
@@ -237,6 +242,83 @@ export default function TripChatPage() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleClearChat = async () => {
+    if (!tripId) return;
+    
+    if (!confirm('Are you sure you want to clear this chat? This will hide all messages from your view, but they will not be deleted.')) {
+      return;
+    }
+    
+    try {
+      await messageAPI.clearChat(undefined, tripId);
+      setShowMenu(false);
+      // Refresh messages to show cleared state
+      await fetchMessages(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to clear chat');
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!tripId) return;
+    
+    if (!confirm('Are you sure you want to leave this group? You will no longer be able to send or receive messages in this chat.')) {
+      return;
+    }
+    
+    try {
+      await messageAPI.leaveGroup(tripId);
+      setShowMenu(false);
+      // Redirect to trips page
+      router.push('/dashboard/trips');
+    } catch (err: any) {
+      setError(err.message || 'Failed to leave group');
+    }
+  };
+
+  const handleToggleMessageSelection = (messageId: string) => {
+    setSelectedMessages(prev => {
+      if (prev.includes(messageId)) {
+        return prev.filter(id => id !== messageId);
+      } else {
+        return [...prev, messageId];
+      }
+    });
+  };
+
+  const handleDeleteSelectedMessages = async () => {
+    if (selectedMessages.length === 0) return;
+    
+    try {
+      // Delete all selected messages
+      await Promise.all(
+        selectedMessages.map(messageId => 
+          messageAPI.deleteMessageForEveryone(messageId)
+        )
+      );
+      setSelectedMessages([]);
+      setSelectionMode(false);
+      setShowDeleteConfirm(false);
+      setShowMenu(false);
+      // Force refresh messages by clearing and refetching
+      setMessages([]);
+      await fetchMessages(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete messages');
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedMessages([]);
+  };
+
+  const handleExitSelectionMode = () => {
+    setSelectedMessages([]);
+    setSelectionMode(false);
+    setShowMenu(false);
   };
 
   if (isLoading) {
@@ -306,19 +388,88 @@ export default function TripChatPage() {
                 </button>
                 {showMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowGroupInfo(true);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Group Info
-                    </button>
-                    {/* Add more menu items here in the future */}
+                    {selectionMode ? (
+                      <>
+                        {selectedMessages.length > 0 && (
+                          <button
+                            onClick={() => {
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete Selected ({selectedMessages.length})
+                          </button>
+                        )}
+                        <button
+                          onClick={handleDeselectAll}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Deselect All
+                        </button>
+                        <button
+                          onClick={handleExitSelectionMode}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Cancel Selection
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setSelectionMode(true);
+                            setShowMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          Select Messages
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowMenu(false);
+                            setShowGroupInfo(true);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Group Info
+                        </button>
+                        <button
+                          onClick={handleClearChat}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Clear Chat
+                        </button>
+                        {trip.user_id !== user.id && (
+                          <button
+                            onClick={handleLeaveGroup}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Leave Group
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -361,26 +512,48 @@ export default function TripChatPage() {
                     </div>
                   )}
                   <div
-                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} items-center gap-2`}
                   >
-                  <div className={`max-w-[75%] sm:max-w-xs md:max-w-md lg:max-w-lg px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl ${
-                    isOwnMessage
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-900 shadow-md'
-                  }`}>
+                    {selectionMode && isOwnMessage && !message.deleted_for_everyone_at && (
+                      <button
+                        onClick={() => handleToggleMessageSelection(message.id)}
+                        className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center bg-white hover:bg-gray-50 transition-colors flex-shrink-0"
+                      >
+                        {selectedMessages.includes(message.id) && (
+                          <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    <div className={`max-w-[75%] sm:max-w-xs md:max-w-md lg:max-w-lg px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl ${
+                      message.deleted_for_everyone_at
+                        ? 'bg-gray-100 text-gray-500 border border-gray-200'
+                        : isOwnMessage
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-900 shadow-md'
+                    } ${
+                      selectedMessages.includes(message.id) ? 'ring-2 ring-blue-400' : ''
+                    }`}>
                     {!isOwnMessage && message.sender && (
                       <p className="text-[10px] sm:text-xs font-semibold mb-1 opacity-75">
                         {message.sender.first_name} {message.sender.last_name}
                       </p>
                     )}
-                    <p className="text-xs sm:text-sm break-words">{message.content}</p>
+                    {message.deleted_for_everyone_at ? (
+                      <p className="text-xs sm:text-sm break-words italic text-gray-500 dark:text-gray-400">
+                        Message deleted
+                      </p>
+                    ) : (
+                      <p className="text-xs sm:text-sm break-words">{message.content}</p>
+                    )}
                     <div className={`flex items-center justify-end gap-1 mt-1 ${
                       isOwnMessage ? 'text-blue-100' : 'text-gray-500'
                     }`}>
                       <p className={`text-[10px] sm:text-xs`}>
                         {new Date(message.created_at).toLocaleTimeString()}
                       </p>
-                      {isOwnMessage && (
+                      {isOwnMessage && !message.deleted_for_everyone_at && (
                         <div className="flex items-center ml-1">
                           {message.is_read ? (
                             // Two colored ticks (read) - Rounded checkmark style
@@ -474,6 +647,34 @@ export default function TripChatPage() {
           </form>
         </div>
       </div>
+
+      {/* Delete Messages Confirmation Modal */}
+      {showDeleteConfirm && selectedMessages.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Delete Messages</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete {selectedMessages.length} {selectedMessages.length === 1 ? 'message' : 'messages'} for everyone? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteSelectedMessages}
+                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Group Info Modal */}
       {showGroupInfo && trip && (

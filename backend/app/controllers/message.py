@@ -6,16 +6,20 @@ from app.models.user import User
 from app.models.message import Message
 from app.models.trip import Trip, TripParticipant
 from app.models.connection import UserConnection, ConnectionStatus
+from app.models.conversation_participant import ConversationParticipant
 from app.schemas.message import (
     MessageCreate,
     MessageResponse,
     MessageWithUser,
-    ChatConversation
+    ChatConversation,
+    ClearChatRequest,
+    DeleteMessageRequest,
+    LeaveGroupRequest
 )
 from app.controllers.auth import get_current_user
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -92,6 +96,8 @@ async def send_message(
             content=new_message.content,
             is_delivered=new_message.is_delivered,
             is_read=new_message.is_read,
+            deleted_for_everyone_at=new_message.deleted_for_everyone_at,
+            deleted_for_everyone_by=str(new_message.deleted_for_everyone_by) if new_message.deleted_for_everyone_by else None,
             created_at=new_message.created_at
         )
     
@@ -164,6 +170,8 @@ async def send_message(
         content=new_message.content,
         is_delivered=new_message.is_delivered,
         is_read=new_message.is_read,
+        deleted_for_everyone_at=new_message.deleted_for_everyone_at,
+        deleted_for_everyone_by=str(new_message.deleted_for_everyone_by) if new_message.deleted_for_everyone_by else None,
         created_at=new_message.created_at
     )
 
@@ -206,10 +214,32 @@ async def get_trip_messages(
             detail="You must be a participant of this trip to view messages"
         )
     
+    # Check if user has cleared this chat or left the group
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
+    conv_participant = db.query(ConversationParticipant).filter(
+        ConversationParticipant.user_id == user_uuid,
+        ConversationParticipant.trip_id == trip_uuid,
+        ConversationParticipant.other_user_id.is_(None)
+    ).first()
+    
+    cleared_at = conv_participant.cleared_at if conv_participant else None
+    left_at = conv_participant.left_at if conv_participant else None
+    
+    # If user left the group, they shouldn't see messages
+    if left_at:
+        return []
+    
     # Get messages for the trip
-    messages = db.query(Message).filter(
+    # Include deleted messages (they will show "Message deleted" in UI)
+    message_query = db.query(Message).filter(
         Message.trip_id == trip_uuid
-    ).order_by(desc(Message.created_at)).limit(limit).offset(offset).all()
+    )
+    
+    # Filter by cleared_at if user has cleared the chat
+    if cleared_at:
+        message_query = message_query.filter(Message.created_at > cleared_at)
+    
+    messages = message_query.order_by(desc(Message.created_at)).limit(limit).offset(offset).all()
     
     # Mark messages as delivered and read if they were sent to current user
     # Note: Trip messages are already marked as delivered when created
@@ -241,9 +271,11 @@ async def get_trip_messages(
             sender_id=str(msg.sender_id),
             receiver_id=None,
             trip_id=str(msg.trip_id),
-            content=msg.content,
+            content=msg.content if not msg.deleted_for_everyone_at else "Message deleted",
             is_delivered=msg.is_delivered,
             is_read=msg.is_read,
+            deleted_for_everyone_at=msg.deleted_for_everyone_at,
+            deleted_for_everyone_by=str(msg.deleted_for_everyone_by) if msg.deleted_for_everyone_by else None,
             created_at=msg.created_at,
             sender={
                 "id": str(sender.id),
@@ -298,8 +330,19 @@ async def get_conversation(
             detail="You must be connected to view messages"
         )
     
+    # Check if user has cleared this chat
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
+    conv_participant = db.query(ConversationParticipant).filter(
+        ConversationParticipant.user_id == user_uuid,
+        ConversationParticipant.other_user_id == target_user_uuid,
+        ConversationParticipant.trip_id.is_(None)
+    ).first()
+    
+    cleared_at = conv_participant.cleared_at if conv_participant else None
+    
     # Get messages between current user and target user (only 1-on-1, not trip messages)
-    messages = db.query(Message).filter(
+    # Include deleted messages (they will show "Message deleted" in UI)
+    message_query = db.query(Message).filter(
         and_(
             or_(
                 and_(
@@ -313,7 +356,13 @@ async def get_conversation(
             ),
             Message.trip_id.is_(None)  # Only 1-on-1 messages
         )
-    ).order_by(desc(Message.created_at)).limit(limit).offset(offset).all()
+    )
+    
+    # Filter by cleared_at if user has cleared the chat
+    if cleared_at:
+        message_query = message_query.filter(Message.created_at > cleared_at)
+    
+    messages = message_query.order_by(desc(Message.created_at)).limit(limit).offset(offset).all()
     
     # Mark messages as delivered and read if they were sent to current user
     for message in messages:
@@ -336,9 +385,11 @@ async def get_conversation(
             sender_id=str(msg.sender_id),
             receiver_id=str(msg.receiver_id) if msg.receiver_id else None,
             trip_id=None,
-            content=msg.content,
+            content=msg.content if not msg.deleted_for_everyone_at else "Message deleted",
             is_delivered=msg.is_delivered,
             is_read=msg.is_read,
+            deleted_for_everyone_at=msg.deleted_for_everyone_at,
+            deleted_for_everyone_by=str(msg.deleted_for_everyone_by) if msg.deleted_for_everyone_by else None,
             created_at=msg.created_at,
             sender={
                 "id": str(current_user.id) if msg.sender_id == current_user.id else str(other_user.id),
@@ -420,7 +471,7 @@ async def get_conversations(
         if not other_user:
             continue
         
-        # Get last message in conversation (only 1-on-1)
+        # Get last message in conversation (only 1-on-1, excluding deleted messages)
         last_message = db.query(Message).filter(
             and_(
                 or_(
@@ -433,16 +484,18 @@ async def get_conversations(
                         Message.receiver_id == user_uuid
                     )
                 ),
-                Message.trip_id.is_(None)  # Only 1-on-1 messages
+                Message.trip_id.is_(None),  # Only 1-on-1 messages
+                Message.deleted_for_everyone_at.is_(None)  # Exclude deleted messages
             )
         ).order_by(desc(Message.created_at)).first()
         
-        # Count unread messages
+        # Count unread messages (excluding deleted)
         unread_count = db.query(Message).filter(
             Message.sender_id == other_user_id,
             Message.receiver_id == user_uuid,
             Message.is_read == False,
-            Message.trip_id.is_(None)  # Only 1-on-1 messages
+            Message.trip_id.is_(None),  # Only 1-on-1 messages
+            Message.deleted_for_everyone_at.is_(None)  # Exclude deleted messages
         ).count()
         
         # Anonymize deleted users
@@ -464,11 +517,13 @@ async def get_conversations(
                 sender_id=str(last_message.sender_id),
                 receiver_id=str(last_message.receiver_id),
                 trip_id=None,
-                content=last_message.content,
+                content=last_message.content if not last_message.deleted_for_everyone_at else "Message deleted",
                 is_delivered=last_message.is_delivered,
                 is_read=last_message.is_read,
+                deleted_for_everyone_at=last_message.deleted_for_everyone_at,
+                deleted_for_everyone_by=str(last_message.deleted_for_everyone_by) if last_message.deleted_for_everyone_by else None,
                 created_at=last_message.created_at
-            ) if last_message else None,
+            ) if last_message and not last_message.deleted_for_everyone_at else None,
             unread_count=unread_count
         ))
     
@@ -485,16 +540,20 @@ async def get_conversations(
         if not trip:
             continue
         
-        # Get last message in trip
+        # Get last message in trip (excluding deleted messages)
         last_message = db.query(Message).filter(
-            Message.trip_id == trip.id
+            and_(
+                Message.trip_id == trip.id,
+                Message.deleted_for_everyone_at.is_(None)  # Exclude deleted messages
+            )
         ).order_by(desc(Message.created_at)).first()
         
-        # Count unread messages (messages not sent by current user)
+        # Count unread messages (messages not sent by current user, excluding deleted)
         unread_count = db.query(Message).filter(
             Message.trip_id == trip.id,
             Message.sender_id != user_uuid,
-            Message.is_read == False
+            Message.is_read == False,
+            Message.deleted_for_everyone_at.is_(None)  # Exclude deleted messages
         ).count()
         
         conversations.append(ChatConversation(
@@ -508,11 +567,13 @@ async def get_conversations(
                 sender_id=str(last_message.sender_id),
                 receiver_id=None,
                 trip_id=str(last_message.trip_id),
-                content=last_message.content,
+                content=last_message.content if not last_message.deleted_for_everyone_at else "Message deleted",
                 is_delivered=last_message.is_delivered,
                 is_read=last_message.is_read,
+                deleted_for_everyone_at=last_message.deleted_for_everyone_at,
+                deleted_for_everyone_by=str(last_message.deleted_for_everyone_by) if last_message.deleted_for_everyone_by else None,
                 created_at=last_message.created_at
-            ) if last_message else None,
+            ) if last_message and not last_message.deleted_for_everyone_at else None,
             unread_count=unread_count
         ))
     
@@ -547,4 +608,308 @@ async def mark_message_read(
     db.commit()
     
     return {"message": "Message marked as read"}
+
+@router.post("/clear-chat", status_code=status.HTTP_200_OK)
+async def clear_chat(
+    request: ClearChatRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Clear chat for the current user (does not delete messages, only hides them)."""
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
+    
+    if request.user_id:
+        # 1-on-1 chat
+        try:
+            other_user_uuid = UUID(request.user_id) if isinstance(request.user_id, str) else request.user_id
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format"
+            )
+        
+        # Check if users are connected
+        connection = db.query(UserConnection).filter(
+            or_(
+                and_(
+                    UserConnection.user_id == current_user.id,
+                    UserConnection.connected_user_id == other_user_uuid,
+                    UserConnection.status == ConnectionStatus.ACCEPTED.value
+                ),
+                and_(
+                    UserConnection.user_id == other_user_uuid,
+                    UserConnection.connected_user_id == current_user.id,
+                    UserConnection.status == ConnectionStatus.ACCEPTED.value
+                )
+            )
+        ).first()
+        
+        if not connection:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must be connected to clear this chat"
+            )
+        
+        # Get or create conversation participant
+        conv_participant = db.query(ConversationParticipant).filter(
+            ConversationParticipant.user_id == user_uuid,
+            ConversationParticipant.other_user_id == other_user_uuid,
+            ConversationParticipant.trip_id.is_(None)
+        ).first()
+        
+        if not conv_participant:
+            conv_participant = ConversationParticipant(
+                user_id=user_uuid,
+                other_user_id=other_user_uuid,
+                trip_id=None,
+                cleared_at=datetime.now(timezone.utc)
+            )
+            db.add(conv_participant)
+        else:
+            conv_participant.cleared_at = datetime.now(timezone.utc)
+        
+        db.commit()
+        return {"message": "Chat cleared successfully"}
+    
+    elif request.trip_id:
+        # Group chat
+        try:
+            trip_uuid = UUID(request.trip_id) if isinstance(request.trip_id, str) else request.trip_id
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid trip ID format"
+            )
+        
+        # Check if user is a participant
+        participant = db.query(TripParticipant).filter(
+            TripParticipant.trip_id == trip_uuid,
+            TripParticipant.user_id == user_uuid,
+            TripParticipant.status == "accepted"
+        ).first()
+        
+        if not participant:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must be a participant of this trip to clear the chat"
+            )
+        
+        # Get or create conversation participant
+        conv_participant = db.query(ConversationParticipant).filter(
+            ConversationParticipant.user_id == user_uuid,
+            ConversationParticipant.trip_id == trip_uuid,
+            ConversationParticipant.other_user_id.is_(None)
+        ).first()
+        
+        if not conv_participant:
+            conv_participant = ConversationParticipant(
+                user_id=user_uuid,
+                other_user_id=None,
+                trip_id=trip_uuid,
+                cleared_at=datetime.now(timezone.utc)
+            )
+            db.add(conv_participant)
+        else:
+            conv_participant.cleared_at = datetime.now(timezone.utc)
+        
+        db.commit()
+        return {"message": "Chat cleared successfully"}
+    
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either user_id or trip_id must be provided"
+        )
+
+@router.post("/delete-for-everyone", status_code=status.HTTP_200_OK)
+async def delete_message_for_everyone(
+    request: DeleteMessageRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a message for everyone (soft delete/tombstone). Only allowed within 7 days."""
+    try:
+        message_uuid = UUID(request.message_id) if isinstance(request.message_id, str) else request.message_id
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid message ID format"
+        )
+    
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
+    
+    # Get the message
+    message = db.query(Message).filter(Message.id == message_uuid).first()
+    
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found"
+        )
+    
+    # Check if message is already deleted
+    if message.deleted_for_everyone_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message is already deleted"
+        )
+    
+    # Check if user is the sender
+    if message.sender_id != user_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only delete your own messages"
+        )
+    
+    # Check time window: 7 days
+    time_limit = datetime.now(timezone.utc) - timedelta(days=7)
+    if message.created_at < time_limit:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Messages can only be deleted within 7 days of sending"
+        )
+    
+    # Soft delete the message (tombstone)
+    message.deleted_for_everyone_at = datetime.now(timezone.utc)
+    message.deleted_for_everyone_by = user_uuid
+    # Optionally clear content for privacy (but keep it for now for potential recovery)
+    
+    db.commit()
+    return {"message": "Message deleted for everyone"}
+
+@router.post("/leave-group", status_code=status.HTTP_200_OK)
+async def leave_group(
+    request: LeaveGroupRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Leave a group chat. User can no longer post/read new messages."""
+    try:
+        trip_uuid = UUID(request.trip_id) if isinstance(request.trip_id, str) else request.trip_id
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid trip ID format"
+        )
+    
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
+    
+    # Check if user is a participant
+    participant = db.query(TripParticipant).filter(
+        TripParticipant.trip_id == trip_uuid,
+        TripParticipant.user_id == user_uuid,
+        TripParticipant.status == "accepted"
+    ).first()
+    
+    if not participant:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a participant of this trip"
+        )
+    
+    # Check if user is the creator (creators might not be allowed to leave, or handle differently)
+    trip = db.query(Trip).filter(Trip.id == trip_uuid).first()
+    if trip and trip.user_id == user_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Trip creators cannot leave the group. Delete the trip instead."
+        )
+    
+    # Get or create conversation participant and mark as left
+    conv_participant = db.query(ConversationParticipant).filter(
+        ConversationParticipant.user_id == user_uuid,
+        ConversationParticipant.trip_id == trip_uuid,
+        ConversationParticipant.other_user_id.is_(None)
+    ).first()
+    
+    if not conv_participant:
+        conv_participant = ConversationParticipant(
+            user_id=user_uuid,
+            other_user_id=None,
+            trip_id=trip_uuid,
+            left_at=datetime.now(timezone.utc),
+            cleared_at=datetime.now(timezone.utc)  # Also clear chat when leaving
+        )
+        db.add(conv_participant)
+    else:
+        conv_participant.left_at = datetime.now(timezone.utc)
+        if not conv_participant.cleared_at:
+            conv_participant.cleared_at = datetime.now(timezone.utc)
+    
+    # Update participant status to declined (or remove, depending on your business logic)
+    # For now, we'll keep them as declined so they can't rejoin without a new invitation
+    participant.status = "declined"
+    
+    db.commit()
+    return {"message": "Left group successfully"}
+
+@router.post("/admin/delete-message", status_code=status.HTTP_200_OK)
+async def admin_delete_message(
+    request: DeleteMessageRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Admin delete a message (for group admins/creators)."""
+    try:
+        message_uuid = UUID(request.message_id) if isinstance(request.message_id, str) else request.message_id
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid message ID format"
+        )
+    
+    user_uuid = UUID(current_user.id) if isinstance(current_user.id, str) else current_user.id
+    
+    # Get the message
+    message = db.query(Message).filter(Message.id == message_uuid).first()
+    
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found"
+        )
+    
+    # Check if message is already deleted
+    if message.deleted_for_everyone_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message is already deleted"
+        )
+    
+    # Check if message is from a group chat
+    if not message.trip_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admin delete is only available for group chat messages"
+        )
+    
+    # Check if user is the trip creator or admin
+    trip = db.query(Trip).filter(Trip.id == message.trip_id).first()
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found"
+        )
+    
+    # Check if user is the creator
+    if trip.user_id != user_uuid:
+        # Check if user is an admin participant (if you have admin roles)
+        participant = db.query(TripParticipant).filter(
+            TripParticipant.trip_id == message.trip_id,
+            TripParticipant.user_id == user_uuid,
+            TripParticipant.role == "admin"  # If you have admin role
+        ).first()
+        
+        if not participant:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only trip creators and admins can delete messages"
+            )
+    
+    # Soft delete the message (tombstone)
+    message.deleted_for_everyone_at = datetime.now(timezone.utc)
+    message.deleted_for_everyone_by = user_uuid
+    
+    db.commit()
+    return {"message": "Message deleted by admin"}
 

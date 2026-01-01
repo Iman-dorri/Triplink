@@ -56,6 +56,9 @@ export default function ChatPage() {
   const [error, setError] = useState('');
   const [otherUser, setOtherUser] = useState<any>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true);
@@ -179,6 +182,7 @@ export default function ChatPage() {
         console.log('Sample message data:', fetchedMessages[0]);
         console.log('is_delivered:', fetchedMessages[0].is_delivered);
         console.log('is_read:', fetchedMessages[0].is_read);
+        console.log('deleted_for_everyone_at:', fetchedMessages[0].deleted_for_everyone_at);
       }
       
       // Only update if messages actually changed to prevent unnecessary re-renders
@@ -191,12 +195,14 @@ export default function ChatPage() {
         if (prevMessages.length !== fetchedMessages.length) {
           return fetchedMessages;
         }
-        // Deep comparison: check if any message content changed
+        // Deep comparison: check if any message content or deletion status changed
         const hasChanges = fetchedMessages.some((msg: any, idx: number) => {
           const prevMsg = prevMessages[idx];
           if (!prevMsg) return true;
-          // Compare IDs and content
-          if (prevMsg.id !== msg.id || prevMsg.content !== msg.content) {
+          // Compare IDs, content, and deletion status
+          if (prevMsg.id !== msg.id || 
+              prevMsg.content !== msg.content ||
+              prevMsg.deleted_for_everyone_at !== msg.deleted_for_everyone_at) {
             return true;
           }
           return false;
@@ -242,6 +248,73 @@ export default function ChatPage() {
     }
   };
 
+  const handleClearChat = async () => {
+    if (!userId) return;
+    
+    if (!confirm('Are you sure you want to clear this chat? This will hide all messages from your view, but they will not be deleted.')) {
+      return;
+    }
+    
+    try {
+      await messageAPI.clearChat(userId);
+      setShowMenu(false);
+      // Refresh messages to show cleared state
+      await fetchMessages(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to clear chat');
+    }
+  };
+
+  const handleToggleMessageSelection = (messageId: string) => {
+    setSelectedMessages(prev => {
+      if (prev.includes(messageId)) {
+        return prev.filter(id => id !== messageId);
+      } else {
+        return [...prev, messageId];
+      }
+    });
+  };
+
+  const handleDeleteSelectedMessages = async () => {
+    if (selectedMessages.length === 0) return;
+    
+    try {
+      // Delete all selected messages
+      await Promise.all(
+        selectedMessages.map(messageId => 
+          messageAPI.deleteMessageForEveryone(messageId)
+        )
+      );
+      setSelectedMessages([]);
+      setSelectionMode(false);
+      setShowDeleteConfirm(false);
+      setShowMenu(false);
+      // Force refresh messages by clearing and refetching
+      setMessages([]);
+      await fetchMessages(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete messages');
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const myMessages = messages.filter(msg => 
+      msg.sender_id === user?.id && !msg.deleted_for_everyone_at
+    );
+    setSelectedMessages(myMessages.map(msg => msg.id));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedMessages([]);
+  };
+
+  const handleExitSelectionMode = () => {
+    setSelectedMessages([]);
+    setSelectionMode(false);
+    setShowMenu(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -259,15 +332,15 @@ export default function ChatPage() {
     <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col overflow-hidden">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-xl border-b border-white/20 shadow-lg shadow-blue-900/5 flex-shrink-0">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20 gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 gap-2">
             <Link 
               href="/dashboard/messages" 
-              className="group flex items-center space-x-2 sm:space-x-3 flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
+              className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0"
             >
-              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 group-hover:from-blue-100 group-hover:to-cyan-100 border border-blue-200/50 group-hover:border-blue-300 transition-all duration-200 shadow-sm group-hover:shadow-md">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
                 <svg 
-                  className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 transform group-hover:-translate-x-0.5 transition-transform duration-200" 
+                  className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white transform group-hover:-translate-x-1 transition-transform duration-300" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -281,7 +354,7 @@ export default function ChatPage() {
                 </svg>
               </div>
               <div className="hidden sm:block">
-                <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">Synvoy</span>
               </div>
             </Link>
             {otherUser && (
@@ -306,7 +379,65 @@ export default function ChatPage() {
               </button>
               {showMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  {/* Add menu items here in the future */}
+                  {selectionMode ? (
+                    <>
+                      {selectedMessages.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete Selected ({selectedMessages.length})
+                        </button>
+                      )}
+                      <button
+                        onClick={handleDeselectAll}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Deselect All
+                      </button>
+                      <button
+                        onClick={handleExitSelectionMode}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Cancel Selection
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setSelectionMode(true);
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Select Messages
+                      </button>
+                      <button
+                        onClick={handleClearChat}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Clear Chat
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -350,23 +481,45 @@ export default function ChatPage() {
                     </div>
                   )}
                   <div
-                    className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} items-center gap-2`}
                   >
-                  <div
+                    {selectionMode && isMyMessage && !message.deleted_for_everyone_at && (
+                      <button
+                        onClick={() => handleToggleMessageSelection(message.id)}
+                        className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center bg-white hover:bg-gray-50 transition-colors flex-shrink-0"
+                      >
+                        {selectedMessages.includes(message.id) && (
+                          <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    <div
                     className={`max-w-[75%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl ${
-                      isMyMessage
+                      message.deleted_for_everyone_at
+                        ? 'bg-gray-100 text-gray-500 border border-gray-200'
+                        : isMyMessage
                         ? 'bg-blue-600 text-white'
                         : 'bg-white text-gray-900 shadow-lg'
+                    } ${
+                      selectedMessages.includes(message.id) ? 'ring-2 ring-blue-400' : ''
                     }`}
-                  >
-                    <p className="break-words text-sm sm:text-base">{message.content}</p>
+                    >
+                    {message.deleted_for_everyone_at ? (
+                      <p className="break-words text-sm sm:text-base italic text-gray-500 dark:text-gray-400">
+                        Message deleted
+                      </p>
+                    ) : (
+                      <p className="break-words text-sm sm:text-base">{message.content}</p>
+                    )}
                     <div className={`flex items-center justify-end gap-1 mt-1 ${
                       isMyMessage ? 'text-blue-100' : 'text-gray-500'
                     }`}>
                       <p className={`text-[10px] sm:text-xs`}>
                         {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
-                      {isMyMessage && (
+                      {isMyMessage && !message.deleted_for_everyone_at && (
                         <div className="flex items-center ml-1">
                           {message.is_read ? (
                             // Two colored ticks (read) - Rounded checkmark style
@@ -457,6 +610,34 @@ export default function ChatPage() {
           </button>
         </form>
       </div>
+
+      {/* Delete Messages Confirmation Modal */}
+      {showDeleteConfirm && selectedMessages.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Delete Messages</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete {selectedMessages.length} {selectedMessages.length === 1 ? 'message' : 'messages'} for everyone? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteSelectedMessages}
+                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

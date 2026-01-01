@@ -203,3 +203,6 @@ docker-compose build backend frontend
 docker-compose stop backend frontend
 docker-compose rm -f backend frontend
 docker-compose up -d backend frontend
+
+
+docker-compose exec backend python3 add_chat_privacy_columns.py

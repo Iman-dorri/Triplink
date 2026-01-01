@@ -73,6 +73,7 @@ export const register = createAsyncThunk(
       firstName: string;
       lastName: string;
       phone?: string;
+      testerCode?: string;
     },
     { rejectWithValue }
   ) => {
@@ -85,6 +86,7 @@ export const register = createAsyncThunk(
         first_name: data.firstName,
         last_name: data.lastName,
         phone: data.phone || undefined,
+        tester_code: data.testerCode || undefined,
       };
       const response = await apiService.register(registerData);
       const user = await apiService.getProfile();

@@ -4,5 +4,6 @@ from .message import Message
 from .trip import Trip, TripParticipant
 from .verification_token import VerificationToken
 from .deletion_cancellation_token import DeletionCancellationToken
+from .conversation_participant import ConversationParticipant
 
-__all__ = ["User", "UserConnection", "ConnectionStatus", "Message", "Trip", "TripParticipant", "VerificationToken", "DeletionCancellationToken"] 
+__all__ = ["User", "UserConnection", "ConnectionStatus", "Message", "Trip", "TripParticipant", "VerificationToken", "DeletionCancellationToken", "ConversationParticipant"] 

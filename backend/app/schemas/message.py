@@ -15,6 +15,8 @@ class MessageResponse(BaseModel):
     content: str
     is_delivered: bool
     is_read: bool
+    deleted_for_everyone_at: Optional[datetime] = None
+    deleted_for_everyone_by: Optional[str] = None
     created_at: datetime
     
     class Config:
@@ -28,6 +30,8 @@ class MessageWithUser(BaseModel):
     content: str
     is_delivered: bool
     is_read: bool
+    deleted_for_everyone_at: Optional[datetime] = None
+    deleted_for_everyone_by: Optional[str] = None
     created_at: datetime
     sender: Optional[dict] = None
     receiver: Optional[dict] = None
@@ -43,3 +47,13 @@ class ChatConversation(BaseModel):
     user_avatar: Optional[str] = None
     last_message: Optional[MessageResponse] = None
     unread_count: int = 0
+
+class ClearChatRequest(BaseModel):
+    user_id: Optional[str] = None  # For 1-on-1 chats
+    trip_id: Optional[str] = None  # For group chats
+
+class DeleteMessageRequest(BaseModel):
+    message_id: str
+
+class LeaveGroupRequest(BaseModel):
+    trip_id: str

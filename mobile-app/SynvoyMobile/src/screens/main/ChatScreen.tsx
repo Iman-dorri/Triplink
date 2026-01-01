@@ -67,6 +67,9 @@ const ChatScreen = ({ route, navigation }: any) => {
   const [trip, setTrip] = useState<any>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -180,6 +183,104 @@ const ChatScreen = ({ route, navigation }: any) => {
     }
   };
 
+  const handleClearChat = async () => {
+    if (!userId && !tripId) return;
+    
+    // Use Alert for confirmation
+    const { Alert } = require('react-native');
+    Alert.alert(
+      'Clear Chat',
+      'Are you sure you want to clear this chat? This will hide all messages from your view, but they will not be deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiService.clearChat(userId, tripId);
+              setShowMenu(false);
+              // Refresh messages to show cleared state
+              await fetchMessages(true);
+            } catch (err: any) {
+              setError(err.message || 'Failed to clear chat');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!tripId) return;
+    
+    const { Alert } = require('react-native');
+    Alert.alert(
+      'Leave Group',
+      'Are you sure you want to leave this group? You will no longer be able to send or receive messages in this chat.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiService.leaveGroup(tripId);
+              setShowMenu(false);
+              // Navigate back
+              navigation.goBack();
+            } catch (err: any) {
+              setError(err.message || 'Failed to leave group');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleToggleMessageSelection = (messageId: string) => {
+    setSelectedMessages(prev => {
+      if (prev.includes(messageId)) {
+        return prev.filter(id => id !== messageId);
+      } else {
+        return [...prev, messageId];
+      }
+    });
+  };
+
+  const handleDeleteSelectedMessages = async () => {
+    if (selectedMessages.length === 0) return;
+    
+    try {
+      // Delete all selected messages
+      await Promise.all(
+        selectedMessages.map(messageId => 
+          apiService.deleteMessageForEveryone(messageId)
+        )
+      );
+      setSelectedMessages([]);
+      setSelectionMode(false);
+      setShowDeleteConfirm(false);
+      setShowMenu(false);
+      // Force refresh messages by clearing and refetching
+      setMessages([]);
+      await fetchMessages(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete messages');
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedMessages([]);
+  };
+
+  const handleExitSelectionMode = () => {
+    setSelectedMessages([]);
+    setSelectionMode(false);
+    setShowMenu(false);
+  };
+
   const renderMessage = ({ item, index }: any) => {
     // For trip chat, check if sender_id matches current user
     // For 1-on-1 chat, same logic applies
@@ -208,18 +309,58 @@ const ChatScreen = ({ route, navigation }: any) => {
             </View>
           </View>
         )}
-        <View style={[styles.messageContainer, isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer]}>
-          <View style={[styles.messageBubble, isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble]}>
+        <View style={[styles.messageRow, isMyMessage ? styles.myMessageRow : styles.otherMessageRow]}>
+          {selectionMode && isMyMessage && !item.deleted_for_everyone_at && (
+            <TouchableOpacity
+              style={styles.checkbox}
+              onPress={() => handleToggleMessageSelection(item.id)}
+              activeOpacity={0.7}
+            >
+              {selectedMessages.includes(item.id) ? (
+                <Icon name="check-box" size={20} color={colors.primary[600]} />
+              ) : (
+                <Icon name="check-box-outline-blank" size={20} color={colors.gray[400]} />
+              )}
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.messageContainer, isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer]}
+            activeOpacity={0.7}
+            onLongPress={() => {
+              if (isMyMessage && !item.deleted_for_everyone_at && !selectionMode) {
+                setSelectionMode(true);
+                handleToggleMessageSelection(item.id);
+              }
+            }}
+          >
+            <View style={[
+              styles.messageBubble, 
+              item.deleted_for_everyone_at 
+                ? styles.deletedMessageBubble 
+                : (isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble),
+              selectedMessages.includes(item.id) && { borderWidth: 2, borderColor: colors.primary[400] }
+            ]}>
             {showSenderName && (
               <Text style={styles.senderName}>
                 {senderName}
               </Text>
             )}
-            <Text style={[styles.messageText, isMyMessage ? styles.myMessageText : styles.otherMessageText]}>
-              {item.content}
-            </Text>
+            {item.deleted_for_everyone_at ? (
+              <Text style={styles.deletedMessageText}>
+                <Text style={styles.deletedMessageItalic}>Message deleted</Text>
+              </Text>
+            ) : (
+              <Text style={[styles.messageText, isMyMessage ? styles.myMessageText : styles.otherMessageText]}>
+                {item.content}
+              </Text>
+            )}
             <View style={[styles.messageTimeContainer, isMyMessage ? styles.myMessageTimeContainer : styles.otherMessageTimeContainer]}>
-              <Text style={[styles.messageTime, isMyMessage ? styles.myMessageTime : styles.otherMessageTime]}>
+              <Text style={[
+                styles.messageTime, 
+                item.deleted_for_everyone_at 
+                  ? styles.deletedMessageTime 
+                  : (isMyMessage ? styles.myMessageTime : styles.otherMessageTime)
+              ]}>
                 {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Text>
               {isMyMessage && (
@@ -244,6 +385,7 @@ const ChatScreen = ({ route, navigation }: any) => {
               )}
             </View>
           </View>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -262,7 +404,7 @@ const ChatScreen = ({ route, navigation }: any) => {
     <>
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       {error ? (
@@ -283,6 +425,8 @@ const ChatScreen = ({ route, navigation }: any) => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         />
       )}
 
@@ -321,21 +465,71 @@ const ChatScreen = ({ route, navigation }: any) => {
             <View style={styles.dropdownOverlay}>
               <TouchableWithoutFeedback>
                 <View style={[styles.dropdownMenu, { top: Platform.OS === 'ios' ? 100 : 60, right: 16 }]}>
-                  {tripId && (
-                    <TouchableOpacity
-                      style={styles.dropdownMenuItem}
-                      onPress={() => {
-                        console.log('Group Info clicked, tripId:', tripId);
-                        setShowMenu(false);
-                        setShowGroupInfo(true);
-                        console.log('showGroupInfo set to:', true);
-                      }}
-                    >
-                      <Icon name="info" size={20} color={colors.text.primary} />
-                      <Text style={styles.dropdownMenuItemText}>Group Info</Text>
-                    </TouchableOpacity>
+                  {selectionMode ? (
+                    <>
+                      {selectedMessages.length > 0 && (
+                        <TouchableOpacity
+                          style={[styles.dropdownMenuItem, { borderBottomColor: colors.red[100] }]}
+                          onPress={() => {
+                            setShowMenu(false);
+                            setShowDeleteConfirm(true);
+                          }}
+                        >
+                          <Icon name="delete" size={20} color={colors.error} />
+                          <Text style={[styles.dropdownMenuItemText, { color: colors.error }]}>
+                            Delete Selected ({selectedMessages.length})
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        style={styles.dropdownMenuItem}
+                        onPress={handleDeselectAll}
+                      >
+                        <Icon name="close" size={20} color={colors.text.primary} />
+                        <Text style={styles.dropdownMenuItemText}>Deselect All</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.dropdownMenuItem}
+                        onPress={handleExitSelectionMode}
+                      >
+                        <Icon name="close" size={20} color={colors.text.primary} />
+                        <Text style={styles.dropdownMenuItemText}>Cancel Selection</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      {tripId && (
+                        <TouchableOpacity
+                          style={styles.dropdownMenuItem}
+                          onPress={() => {
+                            console.log('Group Info clicked, tripId:', tripId);
+                            setShowMenu(false);
+                            setShowGroupInfo(true);
+                            console.log('showGroupInfo set to:', true);
+                          }}
+                        >
+                          <Icon name="info" size={20} color={colors.text.primary} />
+                          <Text style={styles.dropdownMenuItemText}>Group Info</Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        style={styles.dropdownMenuItem}
+                        onPress={handleClearChat}
+                      >
+                        <Icon name="delete-sweep" size={20} color={colors.text.primary} />
+                        <Text style={styles.dropdownMenuItemText}>Clear Chat</Text>
+                      </TouchableOpacity>
+                      {tripId && trip && trip.user_id !== user?.id && (
+                        <TouchableOpacity
+                          style={[styles.dropdownMenuItem, { borderTopColor: colors.red[100] }]}
+                          onPress={handleLeaveGroup}
+                        >
+                          <Icon name="exit-to-app" size={20} color={colors.error} />
+                          <Text style={[styles.dropdownMenuItemText, { color: colors.error }]}>Leave Group</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
                   )}
-                  {/* Add more menu items here in the future */}
                 </View>
               </TouchableWithoutFeedback>
             </View>
@@ -465,6 +659,43 @@ const ChatScreen = ({ route, navigation }: any) => {
         </View>
       </Modal>
     )}
+
+    {/* Delete Messages Confirmation Modal */}
+    {showDeleteConfirm && selectedMessages.length > 0 && (
+      <Modal
+        visible={true}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowDeleteConfirm(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.deleteConfirmModal}>
+            <Text style={styles.deleteConfirmTitle}>Delete Messages</Text>
+            <Text style={styles.deleteConfirmText}>
+              Are you sure you want to delete {selectedMessages.length} {selectedMessages.length === 1 ? 'message' : 'messages'} for everyone? This action cannot be undone.
+            </Text>
+            <View style={styles.deleteConfirmButtons}>
+              <TouchableOpacity
+                style={[styles.deleteConfirmButton, styles.deleteConfirmButtonCancel]}
+                onPress={() => {
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                <Text style={styles.deleteConfirmButtonCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.deleteConfirmButton, styles.deleteConfirmButtonDelete]}
+                onPress={handleDeleteSelectedMessages}
+              >
+                <Text style={styles.deleteConfirmButtonDeleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    )}
     </>
   );
 };
@@ -508,8 +739,23 @@ const styles = StyleSheet.create({
   messagesList: {
     padding: theme.spacing.md,
   },
-  messageContainer: {
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  myMessageRow: {
+    justifyContent: 'flex-end',
+  },
+  otherMessageRow: {
+    justifyContent: 'flex-start',
+  },
+  checkbox: {
+    padding: theme.spacing.xs,
+  },
+  messageContainer: {
+    flex: 1,
   },
   myMessageContainer: {
     alignItems: 'flex-end',
@@ -531,6 +777,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: theme.borderRadius.sm,
     ...theme.shadows.sm,
   },
+  deletedMessageBubble: {
+    backgroundColor: colors.gray[100],
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderBottomLeftRadius: theme.borderRadius.sm,
+    borderBottomRightRadius: theme.borderRadius.sm,
+  },
   messageText: {
     fontSize: theme.fontSize.md,
     marginBottom: theme.spacing.xs,
@@ -540,6 +793,17 @@ const styles = StyleSheet.create({
   },
   otherMessageText: {
     color: colors.text.primary,
+  },
+  deletedMessageText: {
+    fontSize: theme.fontSize.sm, // Match web app: text-sm (14px)
+    color: colors.gray[500], // Match web app: text-gray-500 (#6b7280)
+  },
+  deletedMessageItalic: {
+    // Use custom Inter italic font - the font file itself is italic, so no need for fontStyle
+    fontFamily: 'Inter-Italic',
+  },
+  deletedMessageTime: {
+    color: colors.gray[500], // Gray color for deleted message timestamps
   },
   senderName: {
     fontSize: theme.fontSize.xs,
@@ -603,7 +867,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.default,
     borderTopWidth: 1,
     borderTopColor: colors.gray[200],
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   input: {
     flex: 1,
@@ -615,8 +880,8 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     color: colors.text.primary,
     backgroundColor: colors.background.default,
+    minHeight: 44,
     maxHeight: 100,
-    marginRight: theme.spacing.sm,
   },
   sendButton: {
     backgroundColor: colors.primary[600],
@@ -626,6 +891,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 70,
+    minHeight: 44,
     ...theme.shadows.button,
   },
   sendButtonDisabled: {
@@ -663,9 +929,58 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontWeight: theme.fontWeight.medium,
   },
+  deleteConfirmModal: {
+    backgroundColor: colors.background.default,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    width: '85%',
+    maxWidth: 400,
+  },
+  deleteConfirmTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  deleteConfirmText: {
+    fontSize: theme.fontSize.md,
+    color: colors.text.secondary,
+    marginBottom: theme.spacing.xl,
+    lineHeight: 22,
+  },
+  deleteConfirmButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    justifyContent: 'flex-end',
+  },
+  deleteConfirmButton: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  deleteConfirmButtonCancel: {
+    backgroundColor: colors.gray[100],
+  },
+  deleteConfirmButtonCancelText: {
+    fontSize: theme.fontSize.md,
+    color: colors.text.primary,
+    fontWeight: theme.fontWeight.medium,
+  },
+  deleteConfirmButtonDelete: {
+    backgroundColor: colors.error,
+  },
+  deleteConfirmButtonDeleteText: {
+    fontSize: theme.fontSize.md,
+    color: colors.text.white,
+    fontWeight: theme.fontWeight.semibold,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: colors.background.default,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
     width: '100%',
     height: '100%',
   },

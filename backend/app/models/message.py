@@ -15,6 +15,8 @@ class Message(Base):
     content = Column(Text, nullable=False)
     is_delivered = Column(Boolean, default=False, nullable=False)  # Message delivered to receiver
     is_read = Column(Boolean, default=False, nullable=False)  # Message read by receiver
+    deleted_for_everyone_at = Column(DateTime(timezone=True), nullable=True)  # When message was deleted for everyone
+    deleted_for_everyone_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # Who deleted it
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     
     # Relationships
