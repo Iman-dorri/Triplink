@@ -13,6 +13,7 @@ npm start
 # Run the app (in another terminal)
 npm run android
 npm run android:device
+npx react-native run-android
 
 
 Commands to start each component:
@@ -120,6 +121,9 @@ sudo docker rm synvoy-db synvoy-backend synvoy-frontend synvoy-nginx
 docker start synvoy-db
 # On server:
 docker-compose up -d db
+docker-compose up -d nginx
+docker-compose up -d n8n-postgres
+docker-compose up -d n8n
 
 After changes in frontend on server:
 cd ~/Synvoy

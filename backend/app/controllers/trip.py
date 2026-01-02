@@ -35,6 +35,7 @@ async def create_trip(
         title=trip_data.title,
         description=trip_data.description,
         budget=trip_data.budget,
+        budget_currency=trip_data.budget_currency or 'USD',
         start_date=trip_data.start_date,
         end_date=trip_data.end_date,
         status=trip_data.status or "planning"

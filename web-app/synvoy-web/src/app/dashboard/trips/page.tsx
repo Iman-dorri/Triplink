@@ -19,8 +19,12 @@ export default function TripsPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
+  const [budgetCurrency, setBudgetCurrency] = useState('USD');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // Get today's date in YYYY-MM-DD format for min date
+  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -53,10 +57,18 @@ export default function TripsPage() {
     setError('');
     
     try {
+      // Validate dates
+      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        setError('End date cannot be before start date');
+        setCreating(false);
+        return;
+      }
+      
       const tripData: any = {
         title,
         description: description || undefined,
         budget: budget ? parseFloat(budget) : undefined,
+        budget_currency: budget ? budgetCurrency : undefined,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
       };
@@ -68,6 +80,7 @@ export default function TripsPage() {
       setTitle('');
       setDescription('');
       setBudget('');
+      setBudgetCurrency('USD');
       setStartDate('');
       setEndDate('');
     } catch (err: any) {
@@ -239,17 +252,37 @@ export default function TripsPage() {
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                    Budget ($)
+                    Budget
                   </label>
-                  <input
-                    type="number"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    min="0"
-                    step="0.01"
-                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                    <select
+                      value={budgetCurrency}
+                      onChange={(e) => setBudgetCurrency(e.target.value)}
+                      className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="JPY">JPY</option>
+                      <option value="CAD">CAD</option>
+                      <option value="AUD">AUD</option>
+                      <option value="CHF">CHF</option>
+                      <option value="CNY">CNY</option>
+                      <option value="INR">INR</option>
+                      <option value="MXN">MXN</option>
+                      <option value="BRL">BRL</option>
+                      <option value="SEK">SEK</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
@@ -259,7 +292,14 @@ export default function TripsPage() {
                     <input
                       type="date"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        // If end date is before new start date, clear it
+                        if (endDate && e.target.value && new Date(e.target.value) > new Date(endDate)) {
+                          setEndDate('');
+                        }
+                      }}
+                      min={today}
                       className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -271,8 +311,16 @@ export default function TripsPage() {
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      min={startDate || today}
+                      className={`w-full px-3 sm:px-4 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        endDate && startDate && new Date(endDate) < new Date(startDate)
+                          ? 'border-red-300 focus:ring-red-500'
+                          : 'border-gray-300'
+                      }`}
                     />
+                    {endDate && startDate && new Date(endDate) < new Date(startDate) && (
+                      <p className="text-xs text-red-600 mt-1">End date cannot be before start date</p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -5,16 +5,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // For Android physical devices, use your computer's IP address instead of localhost
 // Your detected IP: 192.168.50.183 (update if it changes)
 const getApiBaseUrl = (): string => {
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+  // Set to true to use local development server, false to use production
+  const USE_LOCAL_DEV = true;
+  
+  if (USE_LOCAL_DEV && typeof __DEV__ !== 'undefined' && __DEV__) {
     // For Android emulator, use 10.0.2.2 (special alias to host machine)
     // For physical device, use your computer's local IP
     // To find your IP: ip addr show | grep "inet " | grep -v 127.0.0.1
-    const DEVICE_IP = '192.168.50.183'; // Your computer's IP - update if it changes
+    const DEVICE_IP = '192.168.50.225'; // Your computer's IP - update if it changes
     // Note: Backend runs directly on port 8000 without /api prefix
     // Nginx adds /api prefix, but direct connection doesn't need it
     return `http://${DEVICE_IP}:8000`; // Physical device - no /api prefix
     // return 'http://10.0.2.2:8000'; // Uncomment for Android emulator
   }
+  
   // Production: use nginx which handles /api prefix
   return 'https://www.synvoy.com/api';
 };

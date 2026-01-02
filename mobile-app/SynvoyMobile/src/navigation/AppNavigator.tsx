@@ -17,6 +17,7 @@ import VerifyEmailScreen from '../screens/auth/VerifyEmailScreen';
 import DashboardScreen from '../screens/main/DashboardScreen';
 import TripsScreen from '../screens/main/TripsScreen';
 import TripDetailScreen from '../screens/main/TripDetailScreen';
+import CreateTripScreen from '../screens/main/CreateTripScreen';
 import ShoppingScreen from '../screens/main/ShoppingScreen';
 import SocialScreen from '../screens/main/SocialScreen';
 import MessagesScreen from '../screens/main/MessagesScreen';
@@ -155,6 +156,16 @@ const AppNavigator = () => {
               <Stack.Screen 
                 name="TripDetail" 
                 component={TripDetailScreen}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                  gestureEnabled: true,
+                  gestureDirection: 'horizontal',
+                }}
+              />
+              <Stack.Screen 
+                name="CreateTrip" 
+                component={CreateTripScreen}
                 options={{
                   headerShown: false,
                   ...TransitionPresets.SlideFromRightIOS,

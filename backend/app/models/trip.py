@@ -13,6 +13,7 @@ class Trip(Base):
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     budget = Column(Numeric(10, 2), nullable=True)
+    budget_currency = Column(String(3), nullable=True, default='USD')  # ISO 4217 currency code (USD, EUR, GBP, etc.)
     start_date = Column(DateTime(timezone=True), nullable=True)
     end_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(50), default="planning")  # planning, active, completed, cancelled

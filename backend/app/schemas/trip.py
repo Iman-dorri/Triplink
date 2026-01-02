@@ -6,6 +6,7 @@ class TripBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
     budget: Optional[float] = Field(None, ge=0)
+    budget_currency: Optional[str] = Field(None, max_length=3, description="ISO 4217 currency code (e.g., USD, EUR, GBP)")
     start_date: Optional[Union[datetime, str]] = None
     end_date: Optional[Union[datetime, str]] = None
     status: Optional[str] = "planning"
@@ -37,6 +38,7 @@ class TripUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     budget: Optional[float] = Field(None, ge=0)
+    budget_currency: Optional[str] = Field(None, max_length=3, description="ISO 4217 currency code (e.g., USD, EUR, GBP)")
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: Optional[str] = None
