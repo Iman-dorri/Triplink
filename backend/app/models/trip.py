@@ -25,6 +25,8 @@ class Trip(Base):
     participants = relationship("TripParticipant", back_populates="trip", cascade="all, delete-orphan")
     destinations = relationship("Destination", back_populates="trip", cascade="all, delete-orphan")
     messages = relationship("Message", back_populates="trip", cascade="all, delete-orphan")
+    expenses = relationship("Expense", back_populates="trip", cascade="all, delete-orphan")
+    settlements = relationship("Settlement", back_populates="trip", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Trip(id={self.id}, title='{self.title}', status='{self.status}')>"

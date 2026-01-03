@@ -266,6 +266,58 @@ class ApiService {
     return response.data;
   }
 
+  // Expense endpoints
+  async createExpense(tripId: string, expenseData: {
+    amount: number;
+    description?: string;
+    payer_user_id: string;
+    participant_user_ids: string[];
+    type?: 'NORMAL' | 'ADJUSTMENT';
+    adjusts_expense_id?: string;
+  }) {
+    const response = await this.client.post(`/expenses/trips/${tripId}/expenses`, expenseData);
+    return response.data;
+  }
+
+  async getTripExpenses(tripId: string, includeVoid: boolean = false) {
+    const response = await this.client.get(`/expenses/trips/${tripId}/expenses`, {
+      params: { include_void: includeVoid }
+    });
+    return response.data;
+  }
+
+  async updateExpense(expenseId: string, expenseData: {
+    amount?: string | number;
+    description?: string;
+    payer_user_id?: string;
+    participant_user_ids?: string[];
+    reason?: string;
+  }) {
+    const response = await this.client.patch(`/expenses/${expenseId}`, expenseData);
+    return response.data;
+  }
+
+  async voidExpense(expenseId: string) {
+    const response = await this.client.post(`/expenses/${expenseId}/void`);
+    return response.data;
+  }
+
+  // Settlement endpoints
+  async getTripSettlements(tripId: string) {
+    const response = await this.client.get(`/settlements/trips/${tripId}/settlements`);
+    return response.data;
+  }
+
+  async createSettlement(settlementData: { expense_ids: string[] }) {
+    const response = await this.client.post('/settlements/', settlementData);
+    return response.data;
+  }
+
+  async markSettlementPaid(settlementId: string) {
+    const response = await this.client.post(`/settlements/${settlementId}/mark-paid`);
+    return response.data;
+  }
+
   // Price alert endpoints
   async getAlerts() {
     const response = await this.client.get('/alerts');
@@ -448,6 +500,15 @@ export const apiService = {
   inviteUsers: (tripId: string, userIds: string[]) => getApiService().inviteUsers(tripId, userIds),
   updateParticipantStatus: (tripId: string, participantId: string, status: 'accepted' | 'declined') => getApiService().updateParticipantStatus(tripId, participantId, status),
   removeParticipant: (tripId: string, participantId: string) => getApiService().removeParticipant(tripId, participantId),
+  // Expense endpoints
+  createExpense: (tripId: string, expenseData: any) => getApiService().createExpense(tripId, expenseData),
+  getTripExpenses: (tripId: string, includeVoid?: boolean) => getApiService().getTripExpenses(tripId, includeVoid),
+  updateExpense: (expenseId: string, expenseData: any) => getApiService().updateExpense(expenseId, expenseData),
+  voidExpense: (expenseId: string) => getApiService().voidExpense(expenseId),
+  // Settlement endpoints
+  getTripSettlements: (tripId: string) => getApiService().getTripSettlements(tripId),
+  createSettlement: (settlementData: any) => getApiService().createSettlement(settlementData),
+  markSettlementPaid: (settlementId: string) => getApiService().markSettlementPaid(settlementId),
   getAlerts: () => getApiService().getAlerts(),
   createAlert: (data: any) => getApiService().createAlert(data),
   updateAlert: (id: string, data: any) => getApiService().updateAlert(id, data),

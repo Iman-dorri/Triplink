@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { tripAPI } from '@/lib/api';
+import { formatBudget } from '@/lib/currency';
 import Link from 'next/link';
 
 export default function TripsPage() {
@@ -183,7 +184,7 @@ export default function TripsPage() {
                     <span>📅 {new Date(trip.start_date).toLocaleDateString()}</span>
                   )}
                   {trip.budget && (
-                    <span>💰 ${trip.budget}</span>
+                    <span>💰 {formatBudget(trip.budget, trip.budget_currency)}</span>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2">

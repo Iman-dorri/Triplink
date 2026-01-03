@@ -25,3 +25,5 @@ class ConversationParticipant(Base):
     def __repr__(self):
         return f"<ConversationParticipant(id={self.id}, user_id={self.user_id}, other_user_id={self.other_user_id}, trip_id={self.trip_id}, cleared_at={self.cleared_at}, left_at={self.left_at})>"
 
+
+

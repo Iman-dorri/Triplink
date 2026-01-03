@@ -583,6 +583,7 @@ export const tripAPI = {
     title?: string;
     description?: string;
     budget?: number;
+    budget_currency?: string;
     start_date?: string;
     end_date?: string;
     status?: string;
@@ -632,6 +633,99 @@ export const tripAPI = {
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to remove participant');
+    }
+  },
+};
+
+// Expense API functions
+export const expenseAPI = {
+  // Create a new expense
+  createExpense: async (tripId: string, expenseData: {
+    amount: number;
+    description?: string;
+    payer_user_id: string;
+    participant_user_ids: string[];
+    type?: 'NORMAL' | 'ADJUSTMENT';
+    adjusts_expense_id?: string;
+  }) => {
+    try {
+      const response = await api.post(`/expenses/trips/${tripId}/expenses`, expenseData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create expense');
+    }
+  },
+
+  // Get expenses for a trip
+  getTripExpenses: async (tripId: string, includeVoid: boolean = false) => {
+    try {
+      const response = await api.get(`/expenses/trips/${tripId}/expenses`, {
+        params: { include_void: includeVoid }
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch expenses');
+    }
+  },
+
+  // Update an expense
+  updateExpense: async (expenseId: string, expenseData: {
+    amount?: string | number;
+    description?: string;
+    payer_user_id?: string;
+    participant_user_ids?: string[];
+    reason?: string;
+  }) => {
+    try {
+      const response = await api.patch(`/expenses/${expenseId}`, expenseData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update expense');
+    }
+  },
+
+  // Void an expense
+  voidExpense: async (expenseId: string) => {
+    try {
+      const response = await api.post(`/expenses/${expenseId}/void`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to void expense');
+    }
+  },
+};
+
+// Settlement API functions
+export const settlementAPI = {
+  // Create a settlement
+  createSettlement: async (settlementData: {
+    expense_ids: string[];
+  }) => {
+    try {
+      const response = await api.post('/settlements/', settlementData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create settlement');
+    }
+  },
+
+  // Get settlements for a trip
+  getTripSettlements: async (tripId: string) => {
+    try {
+      const response = await api.get(`/settlements/trips/${tripId}/settlements`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch settlements');
+    }
+  },
+
+  // Mark settlement as paid
+  markSettlementPaid: async (settlementId: string) => {
+    try {
+      const response = await api.post(`/settlements/${settlementId}/mark-paid`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to mark settlement as paid');
     }
   },
 };

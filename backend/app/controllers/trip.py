@@ -67,6 +67,7 @@ async def create_trip(
         title=new_trip.title,
         description=new_trip.description,
         budget=float(new_trip.budget) if new_trip.budget else None,
+        budget_currency=new_trip.budget_currency,
         start_date=new_trip.start_date,
         end_date=new_trip.end_date,
         status=new_trip.status,
@@ -128,6 +129,7 @@ async def get_trips(
             title=trip.title,
             description=trip.description,
             budget=float(trip.budget) if trip.budget else None,
+            budget_currency=trip.budget_currency,
             start_date=trip.start_date,
             end_date=trip.end_date,
             status=trip.status,
@@ -161,13 +163,17 @@ async def get_trip(
             detail="Trip not found"
         )
     
-    # Check if user is a participant
+    # Check if user is a participant OR the trip creator
+    user_uuid = UUIDType(current_user.id) if isinstance(current_user.id, str) else current_user.id
     participant = db.query(TripParticipant).filter(
         TripParticipant.trip_id == trip_uuid,
-        TripParticipant.user_id == (UUIDType(current_user.id) if isinstance(current_user.id, str) else current_user.id)
+        TripParticipant.user_id == user_uuid
     ).first()
     
-    if not participant:
+    # Allow trip creator even if not a participant (shouldn't happen, but safety check)
+    is_creator = str(trip.user_id) == str(user_uuid)
+    
+    if not participant and not is_creator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this trip"
@@ -205,6 +211,7 @@ async def get_trip(
         title=trip.title,
         description=trip.description,
         budget=float(trip.budget) if trip.budget else None,
+        budget_currency=trip.budget_currency,
         start_date=trip.start_date,
         end_date=trip.end_date,
         status=trip.status,
@@ -245,6 +252,19 @@ async def update_trip(
             detail="Only the trip creator can update the trip"
         )
     
+    # Check currency lock: if ANY expense exists (including VOID), currency cannot be changed
+    from app.models.expense import Expense
+    expense_count = db.query(Expense).filter(
+        Expense.trip_id == trip_uuid
+    ).count()
+    
+    if expense_count > 0 and trip_update.budget_currency is not None:
+        if trip_update.budget_currency != trip.budget_currency:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Currency cannot be changed after expenses are created"
+            )
+    
     # Update fields
     if trip_update.title is not None:
         trip.title = trip_update.title
@@ -252,6 +272,8 @@ async def update_trip(
         trip.description = trip_update.description
     if trip_update.budget is not None:
         trip.budget = trip_update.budget
+    if trip_update.budget_currency is not None:
+        trip.budget_currency = trip_update.budget_currency
     if trip_update.start_date is not None:
         trip.start_date = trip_update.start_date
     if trip_update.end_date is not None:
@@ -294,6 +316,7 @@ async def update_trip(
         title=trip.title,
         description=trip.description,
         budget=float(trip.budget) if trip.budget else None,
+        budget_currency=trip.budget_currency,
         start_date=trip.start_date,
         end_date=trip.end_date,
         status=trip.status,

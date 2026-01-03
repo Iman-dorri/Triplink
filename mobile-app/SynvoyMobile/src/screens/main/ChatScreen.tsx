@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import { formatBudget } from '../../utils/currency';
 import { theme, colors } from '../../theme';
 import apiService from '../../services/api';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -593,7 +594,7 @@ const ChatScreen = ({ route, navigation }: any) => {
                       {trip.budget && (
                         <View style={styles.tripMetaItem}>
                           <Icon name="attach-money" size={16} color={colors.text.secondary} />
-                          <Text style={styles.tripMetaText}>${trip.budget}</Text>
+                          <Text style={styles.tripMetaText}>{formatBudget(trip.budget, trip.budget_currency)}</Text>
                         </View>
                       )}
                     </View>

@@ -46,6 +46,10 @@ class User(Base):
                                     foreign_keys="Message.receiver_id",
                                     back_populates="receiver",
                                     cascade="all, delete-orphan")
+    # Expense relationships
+    created_expenses = relationship("Expense", foreign_keys="Expense.created_by_user_id", back_populates="creator")
+    paid_expenses = relationship("Expense", foreign_keys="Expense.payer_user_id", back_populates="payer")
+    expense_splits = relationship("ExpenseSplit", back_populates="user")
     # notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
